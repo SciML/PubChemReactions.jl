@@ -1,0 +1,78 @@
+module PubChemReactions
+
+using JSON3, HTTP, Symbolics, CSV, DataFrames
+using Symbolics:variable
+
+const PUG_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
+const PUG_VIEW_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view"
+const RHEA_URL = "https://www.rhea-db.org/rhea"
+
+struct Compound
+    name::String
+    cids::Vector{Int}
+end
+
+
+function get_cids(cname::String)
+    input_url = "$(PUG_URL)/compound/name/$(cname)/cids/JSON"
+    res = HTTP.get(input_url)
+    if res.status == 200
+        json_res = JSON3.read(String(res.body))
+        return convert(Vector{Int}, json_res[:IdentifierList][:CID])
+    else
+        error("Cannot Find CID of the species.")
+    end
+end
+
+function species_info(csym)
+    meta = getmetadata(csym, Compound)
+    cid = meta.cids[1]
+    input_url = "$(PUG_URL)/compound/cid/$(cid)/description/JSON"
+    res = HTTP.get(input_url)
+    if res.status == 200
+        species_res = JSON3.read(String(res.body))
+        return species_res
+    else
+        error("Cannot find description of the species")
+    end
+end
+
+function get_chebi_id(csym)
+    cid = getmetadata(csym, Compound).cids[1]
+    input_url = "$PUG_VIEW_URL/data/compound/$cid/JSON/?heading=Biochemical+Reactions"
+    res = HTTP.get(input_url)
+    if res.status == 200
+        species_res = JSON3.read(String(res.body))
+        chebi_id = species_res[:Record][:Reference][1][:SourceID]
+        chebi_id
+    else
+        error("Cannot find CHEBI ID.")
+    end
+end
+
+function gen_sym(cname)
+    csym = variable(cname;T=Symbol)
+    
+    csym = setmetadata(csym, Compound, Compound(cname, get_cids(cname)))
+    csym
+end
+
+function get_biochem_rxns(csym, csyms...)
+    chebi_ids = get_chebi_id(csym)
+    for c in csyms
+        chebi_id = get_chebi_id(c)
+        chebi_ids = chebi_ids * "+" * chebi_id
+    end
+
+    input_url = "$RHEA_URL/?query=$(chebi_ids)&columns=rhea-id,equation,chebi-id&format=tsv"
+    res = HTTP.get(input_url)
+    if res.status == 200
+        return CSV.read(IOBuffer(res.body), DataFrame)
+    else
+        error("Cannot find Biochemical reactions")
+    end
+end
+
+export Compound
+
+end # module
