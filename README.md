@@ -22,10 +22,18 @@ Now, let us find potential BioChemical reactions:
 
 ```julia
 df = PubChemReactions.get_biochem_rxns(C6H12O6,H2O)
-df[!,:Equation]
+eqs = df[!,:Equation]
+```
+### Generating a Reaction Network using PubChem biochem equations
+```
+eq = first(eqs)
+reactants, products, rstoich, pstoich = PubChemReactions.parse_rhea_equation(eq)
+
+# arbitrarily assigning constant rate of 1. 
+# this is where we'd like to do some lookup on the reactants and products to make an educated guess about the rate law
+rxn = Reaction(1, reactants, products, rstoich, pstoich; only_use_rate=true) 
 ```
 
-**WIP: Importing these reaction suggestions to build a Catalyst network.**
 
 Metadata for components can accessed by: 
 ```
