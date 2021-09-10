@@ -14,13 +14,14 @@ struct Compound
 end
 
 function get_cids(cname::AbstractString)
+    cname = HTTP.escapeuri(cname)
     input_url = "$(PUG_URL)/compound/name/$(cname)/cids/JSON"
     res = HTTP.get(input_url)
     if res.status == 200
         json_res = JSON3.read(String(res.body))
         return convert(Vector{Int}, json_res[:IdentifierList][:CID])
     else
-        error("Cannot Find CID of the species.")
+        error("Cannot Find CID of the species $cname.")
     end
 end
 
@@ -33,7 +34,7 @@ function species_info(csym)
         species_res = JSON3.read(String(res.body))
         return species_res
     else
-        error("Cannot find description of the species")
+        error("Cannot find description of the species $csym")
     end
 end
 
@@ -46,7 +47,7 @@ function get_chebi_id(csym)
         chebi_id = species_res[:Record][:Reference][1][:SourceID]
         chebi_id
     else
-        error("Cannot find CHEBI ID.")
+        error("Cannot find CHEBI ID from $csym.")
     end
 end
 
