@@ -9,7 +9,7 @@ We'll just need the name of the species we are interested and it will generate a
 ```julia
 using PubChemReactions
 C6H12O6 = PubChemReactions.gen_sym("glucose")
-H20 = PubChemReactions.gen_sym("water")
+H2O = PubChemReactions.gen_sym("water")
 ```
 
 We can have some details about our components as well (returns a JSON Object currently):
@@ -21,7 +21,7 @@ res[:InformationList][:Information]
 Now, let us find potential BioChemical reactions:
 
 ```julia
-df = PubChemReactions.get_biochem_rxns(C6H12O6,H20)
+df = PubChemReactions.get_biochem_rxns(C6H12O6,H2O)
 df[!,:Equation]
 ```
 
