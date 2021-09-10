@@ -1,6 +1,7 @@
 module PubChemReactions
 
 using JSON3, HTTP, Symbolics, CSV, DataFrames
+using Catalyst
 using Symbolics:variable
 
 const PUG_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
@@ -12,8 +13,7 @@ struct Compound
     cids::Vector{Int}
 end
 
-
-function get_cids(cname::String)
+function get_cids(cname::AbstractString)
     input_url = "$(PUG_URL)/compound/name/$(cname)/cids/JSON"
     res = HTTP.get(input_url)
     if res.status == 200
@@ -51,8 +51,8 @@ function get_chebi_id(csym)
 end
 
 function gen_sym(cname)
-    csym = variable(cname;T=Symbol)
-    
+    csym = Symbol(cname)
+    csym = Symbolics.unwrap(first(@variables $csym(Catalyst.DEFAULT_IV)))
     csym = setmetadata(csym, Compound, Compound(cname, get_cids(cname)))
     csym
 end
@@ -70,6 +70,32 @@ function get_biochem_rxns(csym, csyms...)
         return CSV.read(IOBuffer(res.body), DataFrame)
     else
         error("Cannot find Biochemical reactions")
+    end
+end
+
+"includes stoich values" 
+function rhea_to_reacts_prods(eq::AbstractString)
+    lhs, rhs = split(eq, " = ")
+    split(lhs, " + "), split(rhs, " + ")
+end
+
+function parse_rhea_equation(eq::AbstractString)
+    reactants, products = rhea_to_reacts_prods(eq)
+    rs = map(make_stoich_from_rhea, reactants)
+    ps = map(make_stoich_from_rhea, products)
+    @info rs, ps
+    rstoich, reactants = first.(rs), last.(rs)
+    pstoich, products = first.(ps), last.(ps)
+
+    gen_sym.(reactants), gen_sym.(products), rstoich, pstoich
+end
+
+function make_stoich_from_rhea(s)
+    if startswith(s, r"(\d).* ")
+        ss = split(s, " ")
+        parse(Int, ss[1]), ss[2]
+    else 
+        1, s
     end
 end
 
