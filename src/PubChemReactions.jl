@@ -83,7 +83,6 @@ function parse_rhea_equation(eq::AbstractString)
     reactants, products = rhea_to_reacts_prods(eq)
     rs = map(make_stoich_from_rhea, reactants)
     ps = map(make_stoich_from_rhea, products)
-    @info rs, ps
     rstoich, reactants = first.(rs), last.(rs)
     pstoich, products = first.(ps), last.(ps)
 
