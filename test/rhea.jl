@@ -43,7 +43,7 @@ h2o_ = rxns[2].substrates[2]
 @test isequal(h2o, h2o_)
 
 
-sys_states = rxns_to_states(rxns)
+sys_states = PubChemReactions.species_(rxns)
 @named mysys = ReactionSystem(rxns, Catalyst.DEFAULT_IV, sys_states, []; defaults=Dict(sys_states .=> 1))
 sys = convert(ODESystem, mysys)
 
