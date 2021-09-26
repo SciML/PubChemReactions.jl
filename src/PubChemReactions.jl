@@ -3,6 +3,7 @@ module PubChemReactions
 using JSON3, HTTP, Symbolics, CSV, DataFrames
 using Catalyst
 using Symbolics:variable
+using StatsBase, LightGraphs
 
 const PUG_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
 const PUG_VIEW_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view"
@@ -13,16 +14,20 @@ struct Compound
     cids::Vector{Int}
 end
 
-function get_cids(cname::AbstractString)
+function get_cids_from_cname(cname::AbstractString; verbose=false)
     cname = HTTP.escapeuri(cname)
     input_url = "$(PUG_URL)/compound/name/$(cname)/cids/JSON"
+    verbose && @info input_url
     res = HTTP.get(input_url)
     if res.status == 200
-        json_res = JSON3.read(String(res.body))
-        return convert(Vector{Int}, json_res[:IdentifierList][:CID])
+        return JSON3.read(String(res.body))
     else
         error("Cannot Find CID of the species $cname.")
     end
+end
+
+function get_cids(cname::AbstractString)
+    convert(Vector{Int}, get_cids_from_cname(cname)[:IdentifierList][:CID])
 end
 
 function species_info(csym)
@@ -98,6 +103,8 @@ function make_stoich_from_rhea(s)
         1, s
     end
 end
+
+include("graph.jl")
 
 export Compound
 

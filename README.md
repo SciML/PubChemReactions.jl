@@ -7,7 +7,7 @@ Let us suppose that you have two components, **Glucose** and **Water**, and you 
 We'll just need the name of the species we are interested and it will generate a symbolic variable with appropiate metadata:
 
 ```julia
-using PubChemReactions
+using PubChemReactions, Catalyst
 C6H12O6 = PubChemReactions.gen_sym("glucose")
 H2O = PubChemReactions.gen_sym("water")
 ```
@@ -25,7 +25,7 @@ df = PubChemReactions.get_biochem_rxns(C6H12O6,H2O)
 eqs = df[!,:Equation]
 ```
 ### Generating a Reaction Network using PubChem biochem equations
-```
+```julia
 eq = first(eqs)
 reactants, products, rstoich, pstoich = PubChemReactions.parse_rhea_equation(eq)
 
