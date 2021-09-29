@@ -4,6 +4,7 @@ using JSON3, HTTP, Symbolics, CSV, DataFrames
 using Catalyst
 using Symbolics:variable
 using StatsBase, LightGraphs
+# using GraphMakie, GLMakie
 
 const PUG_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
 const PUG_VIEW_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view"
@@ -107,5 +108,9 @@ end
 include("graph.jl")
 
 export Compound
+
+export @species_str, AtomBondGraph, CompoundCharge
+
+export get_graph, get_charge
 
 end # module
