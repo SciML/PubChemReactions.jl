@@ -1,3 +1,8 @@
+# Only run on agents that are using sandbox.jl
+agents:
+  queue: "testing"
+  sandbox.jl: "true"
+
 steps:
   - label: ":julia: Run tests on 1.6"
     plugins:
