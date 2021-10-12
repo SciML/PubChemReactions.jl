@@ -4,7 +4,10 @@ using JSON3, HTTP, Symbolics, CSV, DataFrames
 using Catalyst
 using Symbolics:variable
 using StatsBase, LightGraphs
-# using GraphMakie, GLMakie
+using GraphMakie, WGLMakie, MetaGraphs
+using GraphPlot
+using Images, FileIO, Plots
+using Downloads
 
 const PUG_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
 const PUG_VIEW_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view"
@@ -80,20 +83,13 @@ function get_biochem_rxns(csym, csyms...)
     end
 end
 
+const ARROWS = ["<->", "->", "<-", "<=>", "=>"]
+
 "includes stoich values" 
 function rhea_to_reacts_prods(eq::AbstractString)
+    eq = replace(eq, (ARROWS .=> "=")...)
     lhs, rhs = split(eq, " = ")
     split(lhs, " + "), split(rhs, " + ")
-end
-
-function parse_rhea_equation(eq::AbstractString)
-    reactants, products = rhea_to_reacts_prods(eq)
-    rs = map(make_stoich_from_rhea, reactants)
-    ps = map(make_stoich_from_rhea, products)
-    rstoich, reactants = first.(rs), last.(rs)
-    pstoich, products = first.(ps), last.(ps)
-
-    gen_sym.(reactants), gen_sym.(products), rstoich, pstoich
 end
 
 function make_stoich_from_rhea(s)
@@ -106,11 +102,21 @@ function make_stoich_from_rhea(s)
 end
 
 include("graph.jl")
+include("plot.jl")
+include("balanced.jl")
 
 export Compound
 
 export @species_str, AtomBondGraph, CompoundCharge
 
-export get_graph, get_charge
+export @pc_str, @reaction_str
+
+export get_graph, get_charge, get_cid, get_name, get_j, get_jv
+
+export atomplot, atomplot2
+
+export parse_rhea_equation
+
+export isbalanced
 
 end # module

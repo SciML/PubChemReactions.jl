@@ -8,6 +8,8 @@
 struct Compound2
     name::String
     cid::Int
+    json::JSON3.Object
+    json_view::JSON3.Object
     # g::SimpleGraph
     # atom_pairs::Vector{Pair{Int, Int}}
 end
@@ -23,7 +25,7 @@ end
 
 function get_json_from_cname(cname::AbstractString; verbose=false)
     cname = HTTP.escapeuri(cname)
-    input_url = "$(PUG_URL)/compound/name/$(cname)/record/JSON"
+    input_url = "$(PUG_URL)/compound/name/$(cname)/record/JSON/"#?record_type=3d"
     verbose && @info input_url
     res = HTTP.get(input_url)
     if res.status == 200
@@ -33,9 +35,13 @@ function get_json_from_cname(cname::AbstractString; verbose=false)
     end
 end
 
+macro pc_str(x)
+    get_json_from_cname(x)
+end
+
 function get_json_and_view_from_cname(cname::AbstractString; verbose=false)
     cname = HTTP.escapeuri(cname)
-    input_url = "$(PUG_URL)/compound/name/$(cname)/record/JSON"
+    input_url = "$(PUG_URL)/compound/name/$(cname)/record/JSON/"#?record_type=3d" # FIX
     
     verbose && @info input_url
     res = HTTP.get(input_url)
@@ -48,6 +54,14 @@ function get_json_and_view_from_cname(cname::AbstractString; verbose=false)
     else
         error("Cannot Find CID of the species $cname.")
     end
+end
+
+macro pc2_str(x)
+    get_json_and_view_from_cname(x)
+end
+
+macro reaction_str(x)
+    get_reaction(x)
 end
 
 function get_json_from_cid(cid; verbose=false)
@@ -87,16 +101,18 @@ function symbolic_species_from_name(cname)
     g, atom_pairs = compound_json_to_simplegraph(j)
     csym = Symbol(cname)
     csym = Symbolics.unwrap(first(@variables $csym(Catalyst.DEFAULT_IV)))
-    csym = setmetadata(csym, PubChemReactions.Compound2, PubChemReactions.Compound2(jview.Record.RecordTitle, jview.Record.RecordNumber))
+    csym = setmetadata(csym, PubChemReactions.Compound2, PubChemReactions.Compound2(jview.Record.RecordTitle, jview.Record.RecordNumber, j, jview))
     csym = setmetadata(csym, PubChemReactions.AtomBondGraph, PubChemReactions.AtomBondGraph(g, atom_pairs))
     csym = setmetadata(csym, PubChemReactions.CompoundCharge, PubChemReactions.CompoundCharge(j.PC_Compounds[1].charge))
     csym
 end
 
-rxnspecies(rxn::Reaction) = unique(reduce(vcat, (rxn.substrates, rxn.products)))
-species_(rxns::Vector{<:Reaction}) = unique(reduce(vcat, map(rxnspecies, rxns)))
+get_species(s) = symbolic_species_from_name(s)
 
-function parse_rhea_equation2(eq::AbstractString)
+Catalyst.species(rxn::Reaction) = unique(reduce(vcat, (rxn.substrates, rxn.products)))
+Catalyst.species(rxns::Vector{<:Reaction}) = unique(reduce(vcat, map(species, rxns)))
+
+function parse_rhea_equation(eq::AbstractString)
     reactants, products = PubChemReactions.rhea_to_reacts_prods(eq)
     rs = map(PubChemReactions.make_stoich_from_rhea, reactants)
     ps = map(PubChemReactions.make_stoich_from_rhea, products)
@@ -106,39 +122,11 @@ function parse_rhea_equation2(eq::AbstractString)
     symbolic_species_from_name.(reactants), symbolic_species_from_name.(products), rstoich, pstoich
 end
 
-"check that the element counts in substrates is equal to products"
-function isbalanced(rxn)
-    all(hasmetadata.(rxnspecies(rxn), Compound2)) || error("some species do not have atom graph metadata")
-    all(hasmetadata.(rxnspecies(rxn), AtomBondGraph)) || error("some species do not have atom graph metadata")
-    atom_counts(rxn.substrates, rxn.substoich) == atom_counts(rxn.products, rxn.prodstoich)
-end
-
-"check that the element counts in sub"
-function isbalanced(rn::ReactionSystem)
-    all(isbalanced.(reactions(rn)))
-end
-
-function countmap_(s)
-    c = getmetadata(s, AtomBondGraph)
-    aps = c.atoms
-    countmap(last.(aps))
-end
-
-function atom_counts(speciess, stoichs)
-    countmaps = countmap_.(speciess)
-
-    for (stoich, cm) in zip(stoichs, countmaps)
-        for (k, v) in cm 
-            cm[k] = stoich * v
-        end
-    end
-
-    mergewith(+, countmaps...)
-end
-
 "generate a chemical species"
 macro species_str(cname)
-    symbolic_species_from_name(cname)
+    s = symbolic_species_from_name(cname)
+    atomplot3(s)
+    s
 end
 
 function isspecies(s)
@@ -148,63 +136,65 @@ end
 get_graph(s) = isspecies(s) ? getmetadata(s, AtomBondGraph) : error("no graph for var $s")
 get_charge(s) = isspecies(s) ? getmetadata(s, CompoundCharge).charge : error("no charge for var $s")
 
-# function graphplot(s::Symbolics.Symbolic)
-#     g = getmetadata(s, AtomBondGraph).g
-#     graphplot(g)
-# end
-
 elements(s) = unique(last.(get_graph(s).atoms))
 elements(s::Vector) = Set(reduce(vcat, elements.(s)))
 
-"""
 
+function get_reaction(eq)
+    x = parse_rhea_equation(eq)
+    get_balanced_reaction(x[1], x[2])
+end
 
-# http://mathgene.usc.es/matlab-profs-quimica/reacciones.pdf
+function get_cid(s)
+    getmetadata(s, Compound2).cid
+end
 
-should i try to catch underdetermined soon, or just let LA give SingularException?
+function get_j(s)
+    getmetadata(s, Compound2).json.PC_Compounds[1]
+end
 
+function get_jv(s)
+    getmetadata(s, Compound2).json_view.Record
+end
 
-"""
-function get_balanced_reaction(substrates, products)
-    all_species = vcat(substrates, products)
-    all(PubChemReactions.isspecies.(all_species)) || error("provide chemcial species (with graphs)")
-    
-    occuring_elements = collect(PubChemReactions.elements(all_species))
-    atom_counts = PubChemReactions.countmap_.(all_species)
-    charges = get_charge.(all_species)
+function get_name(s)
+    getmetadata(s, Compound2).name
+end
 
-    n_subs = length(substrates)
-    n_prods = length(products)
-
-    n_elems = length(occuring_elements)
-    n_eqs = n_specs = length(all_species)
-    
-    A = zeros(Int, n_specs, n_specs)
-
-    for i in 1:n_elems
-        for j in 1:n_specs
-            amt_of_i = occuring_elements[i]
-            coeff = j > n_subs ? -1 : 1
-            A[i, j] = haskey(atom_counts[j], amt_of_i) ? coeff * atom_counts[j][amt_of_i] : 0
+function get_mass(s)
+    j = get_j(s)
+    for p in j.props
+        if p.urn["label"] == "Mass" && p.urn["name"] == "Exact"
+            return parse(Float64, p.value["sval"])
         end
-    end
+    end 
+    error("not found")
+end
 
-    # check if we need another equation for charges
-    if !all(charges .== 0) 
-        for j in 1:n_specs # big hack, needs to be cleaned up 
-            coeff = j > n_subs ? -1 : 1
-            A[n_elems+1, j] = coeff * get_charge(all_species[j])
+function get_mf(s)
+    jv = get_jv(s)
+    for sec in jv.Section
+        if sec.TOCHeading == "Names and Identifiers"
+            for sec2 in sec.Section
+                if sec2.TOCHeading == "Molecular Formula"
+                    return sec2.Information[1].Value.StringWithMarkup[1].String
+                end
+            end
         end
-    end
+    end 
+    error("not found")
+end
 
-    A[end] = 1 # extra so not underdetermined
+" fix this, its misleading because it doesn't return "
+function is_mass_conserved(rxn)
+    subs = sum(rxn.substoich .* get_mass.(rxn.substrates))
+    prods = sum(rxn.prodstoich .* get_mass.(rxn.products))
+    subs, prods
+end
 
-    b = zeros(Int, n_specs)
-    b[end] = 1 # extra equation 
 
-    x = A\b
-    x .= x ./ minimum(x)
-    x = round.(Int , x)
-
-    Reaction(nothing, substrates, products, x[1:n_subs], x[n_subs+1:end])
+function netmass(rxn)
+    subs = sum(rxn.substoich .* get_mass.(rxn.substrates))
+    prods = sum(rxn.prodstoich .* get_mass.(rxn.products))
+    prods - subs
 end
