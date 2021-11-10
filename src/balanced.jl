@@ -1,7 +1,7 @@
 
 "check that the element counts in substrates is equal to products"
 function isbalanced(rxn)
-    all(hasmetadata.(species(rxn), Compound2)) || error("some species do not have atom graph metadata")
+    all(hasmetadata.(species(rxn), Compound)) || error("some species do not have atom graph metadata")
     all(hasmetadata.(species(rxn), AtomBondGraph)) || error("some species do not have atom graph metadata")
     atom_counts(rxn.substrates, rxn.substoich) == atom_counts(rxn.products, rxn.prodstoich)
 end
@@ -11,14 +11,14 @@ function isbalanced(rn::ReactionSystem)
     all(isbalanced.(reactions(rn)))
 end
 
-function countmap_(s)
+function atom_countmap(s)
     c = getmetadata(s, AtomBondGraph)
     aps = c.atoms
     countmap(last.(aps))
 end
 
 function atom_counts(speciess, stoichs)
-    countmaps = countmap_.(speciess)
+    countmaps = atom_countmap.(speciess)
 
     for (stoich, cm) in zip(stoichs, countmaps)
         for (k, v) in cm 
@@ -28,6 +28,9 @@ function atom_counts(speciess, stoichs)
 
     mergewith(+, countmaps...)
 end
+
+elements(s) = unique(last.(get_graph(s).atoms))
+elements(s::Vector) = Set(reduce(vcat, elements.(s)))
 
 """
 
@@ -43,9 +46,8 @@ function get_balanced_reaction(substrates, products; verbose=true)
     all(PubChemReactions.isspecies.(all_species)) || error("provide chemcial species (with graphs)")
     
     occuring_elements = collect(PubChemReactions.elements(all_species))
-    atom_counts = PubChemReactions.countmap_.(all_species)
+    atom_counts = PubChemReactions.atom_countmap.(all_species)
     charges = map(x->get_charge.(x), (substrates, products))
-    @info charges
     n_subs = length(substrates)
     n_prods = length(products)
 
@@ -68,7 +70,6 @@ function get_balanced_reaction(substrates, products; verbose=true)
             coeff = j > n_subs ? -1 : 1
             A[n_elems+1, j] = coeff * get_charge(all_species[j])
         end
-        display(A)
     end
 
     A[end] = 1 # extra so not underdetermined

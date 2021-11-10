@@ -8,17 +8,21 @@ We'll just need the name of the species we are interested and it will generate a
 
 ```julia
 using PubChemReactions, Catalyst
-C6H12O6 = PubChemReactions.gen_sym("glucose")
-H2O = PubChemReactions.gen_sym("water")
+C6H12O6 = PubChemReactions.search_compound("glucose")
+H2O = PubChemReactions.search_compound("water")
 ```
 
 We can have some details about our components as well (returns a JSON Object currently):
 
 ```julia
-res = PubChemReactions.species_info(C6H12O6)
-res[:InformationList][:Information]
+julia> C6H12O6.metadata
+Base.ImmutableDict{DataType, Any} with 4 entries:
+  CompoundCharge => CompoundCharge(0)
+  AtomBondGraph  => AtomBondGraph({24, 24} …
+  Compound       => Compound("D-Glucose", 5793, {…
+  VariableSource => (:variables, :glucose)
 ```
-Now, let us find potential BioChemical reactions:
+Now, let us find potential BioChemical reactions in which these species occur:
 
 ```julia
 df = PubChemReactions.get_biochem_rxns(C6H12O6,H2O)
@@ -31,12 +35,5 @@ reactants, products, rstoich, pstoich = PubChemReactions.parse_rhea_equation(eq)
 
 # arbitrarily assigning constant rate of 1. 
 # this is where we'd like to do some lookup on the reactants and products to make an educated guess about the rate law
-rxn = Reaction(1, reactants, products, rstoich, pstoich; only_use_rate=true) 
+rxn = Reaction(1, reactants, products, rstoich, pstoich; only_use_rate=true)
 ```
-
-
-Metadata for components can accessed by: 
-```
-C6H12O6.metadata
-```
-Which has the cid (CompoundID imported from the PubChem Library).
