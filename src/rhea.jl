@@ -10,7 +10,7 @@ end
 
 "includes stoich values" 
 function rhea_to_reacts_prods(eq::AbstractString)
-    eq = replace(eq, (ARROWS .=> "=")...)
+    eq = foldl(replace, ARROWS .=> "=", init=eq)
     lhs, rhs = split(eq, " = ")
     split(lhs, " + "), split(rhs, " + ")
 end
