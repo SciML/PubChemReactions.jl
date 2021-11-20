@@ -22,6 +22,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 [compat]
 CSV = "0.9"
 DataFrames = "1"
+Graphs = "1"
 HTTP = "0.9"
 JSON = "0.21"
 JSON3 = "1"
