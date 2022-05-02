@@ -28,7 +28,7 @@ sps = [cr2o7_2minus, fe_2plus, hydron, cr_3plus, fe_3plus, h2o]
 subs = [cr2o7_2minus, fe_2plus, hydron]
 prods = [cr_3plus, fe_3plus, h2o]
 
-rxn = PubChemReactions.get_balanced_reaction(subs, prods)
+rxn = PubChemReactions.balance(subs, prods)
 @test PubChemReactions.isbalanced(rxn)
 
 @parameters t k

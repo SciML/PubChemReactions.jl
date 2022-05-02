@@ -11,17 +11,23 @@ function isbalanced(rn::ReactionSystem)
     all(isbalanced.(reactions(rn)))
 end
 
-function atom_countmap(s)
+replace_atom_counts_with_elements(atomcounts) = PeriodicTable.elements[first.(atomcounts)] .=> last.(atomcounts)
+replace_atom_counts_with_elements(atomcounts::Dict) = Dict(PeriodicTable.elements[collect(keys(atomcounts))] .=> values(atomcounts))
+
+function atom_counts(s::Num)
     c = getmetadata(s, AtomBondGraph)
     aps = c.atoms
     countmap(last.(aps))
 end
 
+atom_counts(s::S) where {S<:SymbolicUtils.Symbolic} = atom_counts(Num(s))
+atom_counts(rxn::Reaction) = (atom_counts(rxn.substrates, rxn.substoich), atom_counts(rxn.products, rxn.prodstoich))
+
 function atom_counts(speciess, stoichs)
-    countmaps = atom_countmap.(speciess)
+    countmaps = atom_counts.(speciess)
 
     for (stoich, cm) in zip(stoichs, countmaps)
-        for (k, v) in cm 
+        for (k, v) in cm
             cm[k] = stoich * v
         end
     end
@@ -29,8 +35,10 @@ function atom_counts(speciess, stoichs)
     mergewith(+, countmaps...)
 end
 
-elements(s) = unique(last.(get_graph(s).atoms))
-elements(s::Vector) = Set(reduce(vcat, elements.(s)))
+get_elements(s) = unique(last.(get_graph(s).atoms))
+get_elements(s::Vector) = Set(reduce(vcat, get_elements.(s)))
+
+balance(rxn; kwargs...) = balance(rxn.substrates, rxn.products; k=rxn.rate, kwargs...)
 
 """
 
@@ -41,19 +49,19 @@ should i try to catch underdetermined soon, or just let LA give SingularExceptio
 
 
 """
-function get_balanced_reaction(substrates, products; verbose=true)
+function balance(substrates, products; k=nothing, verbose=true)
     all_species = vcat(substrates, products)
     all(PubChemReactions.isspecies.(all_species)) || error("provide chemcial species (with graphs)")
-    
-    occuring_elements = collect(PubChemReactions.elements(all_species))
-    atom_counts = PubChemReactions.atom_countmap.(all_species)
-    charges = map(x->get_charge.(x), (substrates, products))
+
+    occuring_elements = collect(get_elements(all_species))
+    atom_counts = PubChemReactions.atom_counts.(all_species)
+    charges = map(x -> get_charge.(x), (substrates, products))
     n_subs = length(substrates)
     n_prods = length(products)
 
     n_elems = length(occuring_elements)
     n_eqs = n_specs = length(all_species)
-    
+
     A = zeros(Int, n_specs, n_specs)
 
     for i in 1:n_elems
@@ -65,7 +73,7 @@ function get_balanced_reaction(substrates, products; verbose=true)
     end
 
     # check if we need another equation for charges
-    if !all(charges .== 0) 
+    if !all(charges .== 0)
         for j in 1:n_specs # big hack, needs to be cleaned up 
             coeff = j > n_subs ? -1 : 1
             A[n_elems+1, j] = coeff * get_charge(all_species[j])
@@ -77,10 +85,11 @@ function get_balanced_reaction(substrates, products; verbose=true)
     b = zeros(Int, n_specs)
     b[end] = 1 # extra equation 
 
-    x = A\b
+    x = A \ b
     x .= x ./ minimum(x)
-    x = round.(Int , x)
+    x = round.(Int, x)
 
     # need a better way to set rate. wolfram doesn't include rate in the Reaction type, just subs, prods, and stoichs
-    Reaction(1, substrates, products, x[1:n_subs], x[n_subs+1:end])
+    k = k === nothing ? 1 : k
+    Reaction(k, substrates, products, x[1:n_subs], x[n_subs+1:end])
 end

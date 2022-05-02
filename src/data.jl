@@ -41,10 +41,19 @@ function get_json_from_cname(cname::AbstractString; verbose=false)
     end
 end
 
-function get_json_and_view_from_cname(cname::AbstractString; verbose=false)
+function get_json_and_view_from_cname(cname::AbstractString; kwargs...)
     cname = HTTP.escapeuri(cname)
     input_url = "$(PUG_URL)/compound/name/$(cname)/record/JSON/"#?record_type=3d" # FIX
-    
+    get_json_and_view(input_url; kwargs...)
+end
+
+function get_json_and_view_from_cid(cid; kwargs...)
+    cid = HTTP.escapeuri(cid)
+    input_url = "$(PUG_URL)/compound/cid/$(cid)/record/JSON/"#?record_type=3d" # FIX
+    get_json_and_view(input_url; kwargs...)
+end
+
+function get_json_and_view(input_url; verbose=false)
     verbose && @info input_url
     res = HTTP.get(input_url)
     if res.status == 200
@@ -71,11 +80,11 @@ end
 
 function compound_json_to_simplegraph(j)
     compound = j.PC_Compounds[1]
-    atom_pairs = compound.atoms.aid .=>compound.atoms.element
-    if haskey(compound, :bonds) 
+    atom_pairs = compound.atoms.aid .=> compound.atoms.element
+    if haskey(compound, :bonds)
         bonds = compound.bonds
         bond_pairs = bonds.aid1 .=> bonds.aid2
-    else  
+    else
         bond_pairs = []
     end
     g = build_atom_graph(length(atom_pairs), bond_pairs)
@@ -87,7 +96,7 @@ get_charge(s) = isspecies(s) ? getmetadata(s, CompoundCharge).charge : error("no
 
 function get_reaction(eq)
     x = parse_rhea_equation(eq)
-    get_balanced_reaction(x[1], x[2])
+    balance(x[1], x[2])
 end
 
 function get_cid(s)
@@ -112,10 +121,11 @@ function get_mass(s)
         if p.urn["label"] == "Mass" && p.urn["name"] == "Exact"
             return parse(Float64, p.value["sval"])
         end
-    end 
+    end
     error("not found")
 end
 
+"I may want to just compute a molecular formula from the graph"
 function get_molecular_formula(s)
     jv = get_jview(s)
     for sec in jv.Section
@@ -126,7 +136,7 @@ function get_molecular_formula(s)
                 end
             end
         end
-    end 
+    end
     error("not found")
 end
 
