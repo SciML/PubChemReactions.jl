@@ -22,11 +22,15 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
 CSV = "0.9"
+Catalyst = "10"
 DataFrames = "1"
+Graphs = "1"
 HTTP = "0.9"
+Images = "0.24"
 JSON = "0.21"
 JSON3 = "1"
 Symbolics = "4"
+Unitful = "1"
 
 [extras]
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
