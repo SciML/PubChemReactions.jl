@@ -1,8 +1,8 @@
 steps:
-  - label: ":julia: Run tests on 1.6"
+  - label: ":julia: Run tests"
     plugins:
       - JuliaCI/julia#v1:
-          version: 1.6
+          version: 1.7
       - JuliaCI/julia-test#v1:
           use_ssh: true
           extra_registries: https://github.com/JuliaComputing/JuliaSimRegistry
