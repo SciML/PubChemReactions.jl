@@ -5,12 +5,21 @@ using Catalyst, Graphs
 using StatsBase
 using Images, FileIO, Plots
 using Downloads
+# using URIs maybe
 using PeriodicTable
+using Cascadia, Gumbo # grumble grumble
+using Groebner, DynamicPolynomials
+const PC_ROOT = "https://pubchem.ncbi.nlm.nih.gov"
+const PUG_URL = joinpath(PC_ROOT, "rest/pug")
+const PUG_VIEW_URL = joinpath(PC_ROOT, "rest/pug_view")
+const RXN_TABLE_BASE_URL = joinpath(PC_ROOT, "sdq/sdqagent.cgi")
 
-const PUG_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
-const PUG_VIEW_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view"
 const RHEA_URL = "https://www.rhea-db.org/rhea"
-const ARROWS = ["<->", "->", "<-", "<=>", "=>"] # lame hack for parsing string reactions
+
+const ARROWS = ["<->", "->", "<-", "<=>", "=>", "⟶"] # lame hack for parsing string reactions
+
+const DATADIR = joinpath(@__DIR__, "../data/")
+const COMPOUNDS_DIR = joinpath(DATADIR, "compounds")
 
 include("data.jl")
 include("rhea.jl")
@@ -18,10 +27,18 @@ include("graph.jl")
 include("plot.jl")
 include("species.jl")
 include("balance.jl")
+include("pathway.jl")
 
 export Compound
-export @species_str
-export @species
-export balance, isbalanced
+export @species_str, @species
+export get_cid, get_name, get_charge, get_graph
+export atom_counts, element_counts, atom_matrix
+export save_species, load_species
+export pubchem_search
+export balance, balance_eqs, isbalanced
+export atomplot, atomplot2d, atomplot3d
+
+pc() = open_in_default_browser(PC_ROOT)
+export pc
 
 end # module

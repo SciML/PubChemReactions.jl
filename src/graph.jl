@@ -24,5 +24,3 @@ end
 
 Catalyst.species(rxn::Reaction) = unique(reduce(vcat, (rxn.substrates, rxn.products)))
 Catalyst.species(rxns::Vector{<:Reaction}) = unique(reduce(vcat, map(species, rxns)))
-
-

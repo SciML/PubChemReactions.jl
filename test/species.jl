@@ -26,3 +26,18 @@ ag = getmetadata(N2_gas, PubChemReactions.AtomBondGraph)
 
 @species CO2(t) = 5 [unit = u"mol/L"]
 @test Symbolics.getdefaultval(CO2) == 5
+
+# reaction with charged species
+@species Hplus(t) [name="H+"] OHminus(t) [name="OH-"] H2O(t)
+@test PubChemReactions.get_charge.([Hplus, OHminus, H2O]) == [1, -1, 0]
+@test isbalanced(balance(Reaction(1, [Hplus, OHminus], [H2O])))
+
+# save/load 
+@species Water(t)
+cid = get_cid(Water)
+p = joinpath(PubChemReactions.COMPOUNDS_DIR, string(cid))
+isdir(p) && rm(p;recursive=true)
+@test !isdir(p)
+@species Water(t) [save=true]
+@test isdir(p)
+@species Water(t) [load=true]

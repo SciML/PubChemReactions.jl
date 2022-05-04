@@ -12,7 +12,7 @@ end
 function rhea_to_reacts_prods(eq::AbstractString)
     eq = foldl(replace, ARROWS .=> "=", init=eq)
     lhs, rhs = split(eq, " = ")
-    split(lhs, " + "), split(rhs, " + ")
+    strip.(split(lhs, " + ")), strip.(split(rhs, " + "))
 end
 
 function make_stoich_from_rhea(s)
