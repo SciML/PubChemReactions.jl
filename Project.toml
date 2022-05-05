@@ -27,6 +27,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
 CSV = "0.9"
+Cascadia = "1"
 Catalyst = "10"
 DataFrames = "1"
 Graphs = "1"
