@@ -1,8 +1,8 @@
 "also probably bad idea maybe"
 Base.diff(rxn::Catalyst.Reaction) = replace_atom_counts_with_elements(mergewith(-, reverse(atom_counts(rxn))...))
 
-function isbalanced(substrates, products;substoich=ones(length(substrates)),prodstoich=ones(length(products)))
-    atom_counts(substrates, substoich) == atom_counts(products, prodstoich) 
+function isbalanced(substrates, products; substoich=ones(length(substrates)), prodstoich=ones(length(products)))
+    atom_counts(substrates, substoich) == atom_counts(products, prodstoich)
 end
 
 "check that the element counts in substrates is equal to products"
@@ -20,6 +20,7 @@ end
 replace_atom_counts_with_elements(atomcounts) = PeriodicTable.elements[first.(atomcounts)] .=> last.(atomcounts)
 replace_atom_counts_with_elements(atomcounts::Dict) = Dict(PeriodicTable.elements[collect(keys(atomcounts))] .=> values(atomcounts))
 element_counts(x) = replace_atom_counts_with_elements(atom_counts(x))
+element_counts(x::Reaction) = replace_atom_counts_with_elements.(atom_counts(x))
 
 function atom_counts(s::Num)
     c = getmetadata(s, AtomBondGraph)
@@ -56,11 +57,11 @@ should i try to catch underdetermined soon, or just let LA give SingularExceptio
 
 
 """
-function balance(substrates, products; k=nothing, add_constraint_eq=true, force_integer_stoich=true, verbose=true)
+function balance(substrates, products; k=nothing, add_constraint_eq=true, force_integer_stoich=true, short_circuit=true, verbose=true)
     # hack for now 
     k = k === nothing ? 1 : k
     # might want an early exit
-    # isbalanced(substrates, products) && return Reaction(k, substrates, products)
+    short_circuit && isbalanced(substrates, products) && return Reaction(k, substrates, products)
 
     all_species = vcat(substrates, products)
     all(PubChemReactions.isspecies.(all_species)) || error("provide chemcial species (with graphs)")
@@ -80,7 +81,6 @@ function balance(substrates, products; k=nothing, add_constraint_eq=true, force_
         sol ./= gcd(sol)
     end
     @assert all(>(0), sol)
-    # need a better way to set rate. wolfram doesn't include rate in the Reaction type, just subs, prods, and stoichs
     rxn = Reaction(k, substrates, products, sol[1:n_subs], sol[n_subs+1:end])
     @info rxn
     @assert isbalanced(rxn)
