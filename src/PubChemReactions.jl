@@ -28,7 +28,7 @@ include("rhea.jl")
 include("graph.jl")
 include("plot.jl")
 include("species.jl")
-# include("balance.jl")
+include("balance.jl")
 include("pathway.jl")
 include("utils.jl")
 
@@ -38,7 +38,7 @@ export get_cid, get_name, get_charge, get_graph
 export atom_counts, element_counts, atom_matrix
 export save_species, load_species, isspecies
 export pubchem_search
-# export balance, balance_eqs, isbalanced
+export balance_eqs, isbalanced # , balance
 export atomplot, atomplot2d, atomplot3d
 export make_at_species, eqs_to_mathematica
 export pathway_reaction

@@ -1,27 +1,13 @@
-"need to fix rate handling, defaulting all to 1 sucks"
-function get_pathway(pid; try_balance=false)
+function pathway_json(pid)
     internal_pid = get_internal_pathwayid(pid)
     url = join([PubChemReactions.RXN_TABLE_BASE_URL, "?infmt=json&outfmt=json&query={%22download%22:%22*%22,%22collection%22:%22pathwayreaction%22,%22where%22:{%22ands%22:[{%22pathwayid%22:%22$(internal_pid)%22}]},%22order%22:[%22relevancescore,desc%22],%22start%22:1,%22limit%22:10000000,%22downloadfilename%22:%22$(internal_pid)_pathwayreaction%22}"])
-    jrxns = JSON3.read(get_page(url))
-    rxn_strs = getproperty.(jrxns, :reaction)
-    rxns = Catalyst.Reaction[]
-    failed = []
-    for (i, rxn_str) in enumerate(rxn_strs)
-        if try_balance
-            try
-                subs, prods = parse_pathway_reaction(rxn_str)
-                push!(rxns, balance(subs, prods))
-            catch e
-                push!(failed, rxn_str)
-                @info i, rxn_str, e
-            end
-        else 
-            subs, prods = parse_pathway_reaction(rxn_str)
-            rxn = Reaction(1, subs, prods)
-            push!(rxns, rxn)
-        end
-    end
-    rxns, failed
+    JSON3.read(get_page(url))
+end
+
+"need to fix rate handling, defaulting all to 1 sucks"
+function get_pathway(pid)
+    jrxns = pathway_json(pid)
+    pathway_reaction_to_reaction.(jrxns)
 end
 
 function species_(s, cid)
@@ -72,4 +58,28 @@ function get_internal_pathwayid(pid)
     ms = eachmatch(Selector("meta"), h)
     m = only(filter(x -> haskey(x.attributes, "name") && (x.attributes["name"] == "pubchem_uid_value"), ms))
     m.attributes["content"]
+end
+
+function pc_pathway_rxn_to_rp_cids(jr)
+    rcids = get(jr, :cidsreactant, [])
+    pcids = get(jr, :cidsproduct, [])
+    to_arr.((rcids, pcids))
+end
+
+to_arr(xs) = isa(xs, AbstractArray) ? xs : [xs]
+
+"check that the reaction str `jr.reaction`, when parsed, has the same length as the rcids and pcids from the json"
+function is_reacts_prods_cids_aligned(jr)
+    rxn_str = jr.reaction
+    rp = pc_pathway_rxn_to_rp_cids(jr)
+    sp = rhea_to_reacts_prods(rxn_str)
+    length.(rp) == length.(sp)
+end
+
+"todo: fix that all reactions are unidirectional "
+function pathway_reaction_to_reaction(jr)
+    rcids, pcids = pc_pathway_rxn_to_rp_cids(jr)
+    rs = species_from_cid.(rcids)
+    ps = species_from_cid.(pcids)
+    Reaction(1, rs, ps)
 end
