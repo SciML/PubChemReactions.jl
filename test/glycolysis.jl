@@ -51,11 +51,6 @@ sol = solve(prob, Rosenbrock23())
 
 sts = states(new_rs)
 
-# for st in sts
-#     ex = :((; $st) = $new_rs)
-#     @info ex
-# end
-
 (; Adenosinetriphosphate, var"alpha-D-Glucopyranose", Hydron, var"alpha-D-glucose 6-phosphate(2-)", var"Adenosine-diphosphate", var"beta-D-fructofuranose 6-phosphate(2-)", var"Fructose 1,6-bisphosphate", var"D-glyceraldehyde 3-phosphate(2-)", var"Glycerone phosphate(2-)", var"Diphosphopyridine nucleotide", var"Hydrogen phosphate", var"NADH dianion", var"3-phosphonato-D-glyceroyl phosphate(4-)", var"3-phosphonato-D-glycerate(3-)", var"2-phosphonato-D-glycerate(3-)", Phosphonatoenolpyruvate, Water, Pyruvate) = new_rs
 
 
