@@ -39,7 +39,6 @@ good = rxns[Not(3)]
 r = rxns[3]
 Hydron = states(rs)[3]
 new_r = Reaction(r.rate, r.substrates, [r.products..., Hydron])
-rxns[1:2, 4:end]
 new_rxns = [rxns[1:2]..., new_r, rxns[4:end]...]
 
 @named new_rs = ReactionSystem(new_rxns, t)
@@ -93,11 +92,36 @@ defaults = first.(defaults) .=> ustrip.(last.(defaults))
 new_sys = convert(ODESystem, def_rs)
 new_prob = ODEProblem(new_sys, defaults, (0, 100))
 sol = solve(new_prob, Rosenbrock23())
-plot(sol)
+# plot(sol)
 atp_ = sol[Adenosinetriphosphate]
-@test_broken atp_[end]
+@test_broken atp_[end] > atp_[begin]
 
 # next steps are adding bidirectionality to applicable reactions, reaction rates, and enzymes/hill rates
 
 # cids = unique(reduce(vcat, map(x -> x.cids, jrxns)))
 # proteins = filter(!isnothing, unique(reduce(vcat, map(x -> get(x, :protacxns, nothing), jrxns))))
+
+# using the reactions with double arrows from wikipedia
+bidir_rxns_idxs = [2, 4, 5, 6, 7, 8, 9]
+function reverse_rxn(r::Reaction)
+    Reaction(r.rate, r.products, r.substrates, r.prodstoich, r.substoich; only_use_rate=r.only_use_rate)
+end
+bidirs = reverse_rxn.(new_rxns[bidir_rxns_idxs])
+
+bidir_rxns = [new_rxns; bidirs]
+@parameters k[1:length(bidir_rxns)]
+for (i, r) in enumerate(bidir_rxns)
+    @set! bidir_rxns[i].rate = k[i]
+end
+
+bidir_rxns
+p_defs = collect(k .=> ones(17))
+all_defaults = [defaults; p_defs]
+@named bidir_rs = ReactionSystem(bidir_rxns, t; defaults=all_defaults)
+bidir_sys = convert(ODESystem, bidir_rs)
+bidir_prob = ODEProblem(bidir_sys, defaults, (0, 100))
+sol = solve(bidir_prob, Rosenbrock23())
+
+# plot(sol)
+
+# equations(bidir_sys)
