@@ -1,4 +1,4 @@
-using InvertedIndices
+using InvertedIndices, Setfield
 using Unitful, Plots
 
 # below was attempting to do this all manually
