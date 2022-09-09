@@ -27,6 +27,8 @@ solution = solve(eqs,[sym('x1'),sym('x2'),sym('x3')])
 ```
 
 # mathematica
+OH- + H+ -> H2O
+```wl
 eqs = {
     u[1] == u[3],
     u[1] + u[2] == 2*u[3],
@@ -35,6 +37,7 @@ eqs = {
 possible = FindInstance[eqs, {u[1], u[2], u[3]}, PositiveIntegers]
 xs = Map[Last, First[possible]]
 sol = xs / Min[xs] # {1,1,1}
+```
 
 # python 
 eqs = [
@@ -54,7 +57,7 @@ eqs = [
     u[1] + u[2] ~ 2 * u[3],
     -u[1] + u[2] ~ 0
 ]
-
+OH- + H+ <-> H2O
 
 
 ts = PubChemReactions.eq_to_term.(eqs)

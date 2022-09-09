@@ -142,6 +142,25 @@ function get_molecular_formula(s)
     end
     error("not found")
 end
+val_from_sec(s) = s.Information[1].Value.StringWithMarkup[1].String
+
+function get_smiles(s)
+    jv = get_jview(s)
+    for sec in jv.Section
+        if sec.TOCHeading == "Names and Identifiers"
+            for sec2 in sec.Section
+                if sec2.TOCHeading == "Computed Descriptors"
+                    for sec3 in sec2.Section
+                        if sec3.TOCHeading == "Canonical SMILES"
+                            return sec3.Information[1].Value.StringWithMarkup[1].String
+                        end
+                    end
+                end
+            end
+        end
+    end
+    error("not found")
+end
 
 function get_chebi_id(csym)
     cid = get_cid(csym)

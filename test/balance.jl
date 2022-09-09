@@ -7,10 +7,10 @@ using Catalyst
 @variables x[1:6]
 rxns = []
 
-@species CH4(t) [save = true, load = true]
-@species O2(t) [save = true, load = true]
-@species CO2(t) [save = true, load = true]
-@species H2O(t) [save = true, load = true]
+@species CH4(t) [cid = 297, save = true, load = true]
+@species O2(t) [cid = 977, save = true, load = true]
+@species CO2(t) [cid = 280, save = true, load = true]
+@species H2O(t) [cid = 962, save = true, load = true]
 
 @species Dichromate(t) [cid = 24503, save = true, load = true]
 @species FerrousIon(t) [cid = 27284, save = true, load = true]
@@ -19,11 +19,11 @@ rxns = []
 @species ChromiumIII(t) [cid = 27668, save = true, load = true]
 @species FerricIon(t) [cid = 29936, save = true, load = true]
 
-@species P2I4(t) [save = true, load = true]
+@species P2I4(t) [cid = 83484, save = true, load = true]
 @species P4(t) [cid = 123286, save = true, load = true]
 @species PH4I(t) [cid = 166618, save = true, load = true]
-@species H3PO4(t) [save = true, load = true]
-@species Hydroxide(t) [save = true, load = true]
+@species H3PO4(t) [cid = 1004, save = true, load = true]
+@species Hydroxide(t) [cid = 961, save = true, load = true]
 
 rn = @reaction_network begin
     c1, X --> 2X
@@ -74,3 +74,16 @@ push!(rxns, rxn)
 # @test !isbalanced(rxn)
 # brxn = balance(rxn)
 # @test isbalanced(brxn)
+
+# @species var"Ozone"(t) [cid = 24823, save = true, load = true]
+# @species var"Hydroxide"(t) [cid = 961, save = true, load = true]
+# @species var"Hydrogenperoxide(1-)"(t) [cid = 18500, save = true, load = true]
+# @species var"Oxygen"(t) [cid = 977, save = true, load = true]
+
+# sps = reduce(vcat, [[O3, OH], [HO2, O2]])
+
+# rxn = Reaction(1, [O3, OH], [HO2, O2])
+# eqs = balance_eqs(rxn)
+# weqs = eqs_to_mathematica(eqs)
+
+

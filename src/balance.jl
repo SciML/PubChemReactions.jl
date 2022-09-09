@@ -1,8 +1,8 @@
 "also probably bad idea maybe"
 Base.diff(rxn::Catalyst.Reaction) = replace_atom_counts_with_elements(mergewith(-, reverse(atom_counts(rxn))...))
 
-function isbalanced(substrates, products;substoich=ones(length(substrates)),prodstoich=ones(length(products)))
-    atom_counts(substrates, substoich) == atom_counts(products, prodstoich) 
+function isbalanced(substrates, products; substoich=ones(length(substrates)), prodstoich=ones(length(products)))
+    atom_counts(substrates, substoich) == atom_counts(products, prodstoich)
 end
 
 "check that the element counts in substrates is equal to products"
@@ -20,6 +20,7 @@ end
 replace_atom_counts_with_elements(atomcounts) = PeriodicTable.elements[first.(atomcounts)] .=> last.(atomcounts)
 replace_atom_counts_with_elements(atomcounts::Dict) = Dict(PeriodicTable.elements[collect(keys(atomcounts))] .=> values(atomcounts))
 element_counts(x) = replace_atom_counts_with_elements(atom_counts(x))
+element_counts(x::Reaction) = replace_atom_counts_with_elements.(atom_counts(x))
 
 function atom_counts(s::Num)
     c = getmetadata(s, AtomBondGraph)
@@ -45,47 +46,46 @@ end
 get_elements(s) = unique(last.(get_graph(s).atoms))
 get_elements(s::Vector) = Set(reduce(vcat, get_elements.(s)))
 
-balance(rxn; kwargs...) = balance(rxn.substrates, rxn.products; k=rxn.rate, kwargs...)
+# balance(rxn; kwargs...) = balance(rxn.substrates, rxn.products; k=rxn.rate, kwargs...)
 
-"""
-
-
-# http://mathgene.usc.es/matlab-profs-quimica/reacciones.pdf
-
-should i try to catch underdetermined soon, or just let LA give SingularException?
+# """
 
 
-"""
-function balance(substrates, products; k=nothing, add_constraint_eq=true, force_integer_stoich=true, verbose=true)
-    # hack for now 
-    k = k === nothing ? 1 : k
-    # might want an early exit
-    # isbalanced(substrates, products) && return Reaction(k, substrates, products)
+# # http://mathgene.usc.es/matlab-profs-quimica/reacciones.pdf
 
-    all_species = vcat(substrates, products)
-    all(PubChemReactions.isspecies.(all_species)) || error("provide chemcial species (with graphs)")
+# should i try to catch underdetermined soon, or just let LA give SingularException?
 
-    occuring_elements, atomcounts, chgs, n_specs, n_subs = balance_setup(substrates, products)
 
-    @polyvar x[1:n_specs] # couldn't get to work with @variables 
-    eqs = balance_eqs(x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq)
-    ts = eq_to_term.(eqs)
-    newt = groebner(ts)
-    sol = only(realsolutions(Symbolics.generic_extension_solve(newt)))
+# """
+# function balance(substrates, products; k=nothing, add_constraint_eq=true, force_integer_stoich=true, short_circuit=true, verbose=true)
+#     # hack for now 
+#     k = k === nothing ? 1 : k
+#     # might want an early exit
+#     short_circuit && isbalanced(substrates, products) && return Reaction(k, substrates, products)
 
-    if force_integer_stoich
-        sol ./= minimum(real.(sol))
-        sol = 1000 * (sol) # for the love of god I want a symbolic solver that handles infinite solutions
-        sol = convert.(Int, sol)
-        sol ./= gcd(sol)
-    end
-    @assert all(>(0), sol)
-    # need a better way to set rate. wolfram doesn't include rate in the Reaction type, just subs, prods, and stoichs
-    rxn = Reaction(k, substrates, products, sol[1:n_subs], sol[n_subs+1:end])
-    @info rxn
-    @assert isbalanced(rxn)
-    rxn
-end
+#     all_species = vcat(substrates, products)
+#     all(PubChemReactions.isspecies.(all_species)) || error("provide chemcial species (with graphs)")
+
+#     occuring_elements, atomcounts, chgs, n_specs, n_subs = balance_setup(substrates, products)
+
+#     @polyvar x[1:n_specs] # couldn't get to work with @variables 
+#     eqs = balance_eqs(x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq)
+#     ts = eq_to_term.(eqs)
+#     newt = groebner(ts)
+#     sol = only(realsolutions(Symbolics.generic_extension_solve(newt)))
+
+#     if force_integer_stoich
+#         sol ./= minimum(real.(sol))
+#         sol = 1000 * (sol) # for the love of god I want a symbolic solver that handles infinite solutions
+#         sol = convert.(Int, sol)
+#         sol ./= gcd(sol)
+#     end
+#     @assert all(>(0), sol)
+#     rxn = Reaction(k, substrates, products, sol[1:n_subs], sol[n_subs+1:end])
+#     @info rxn
+#     @assert isbalanced(rxn)
+#     rxn
+# end
 
 function balance_eqs(x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq=false)
     eqs = Equation[]

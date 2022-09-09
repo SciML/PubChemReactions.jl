@@ -103,6 +103,8 @@ function search_compound(cname)
     j, jview = PubChemReactions.get_json_and_view_from_cname(cname)
     set_species_metadata(csym, j, jview)
 end
+# alias
+species_from_name(cname) = search_compound(cname)
 
 function species_from_cid(cid, j, jview)
     name = Symbol(jview.Record.RecordTitle)
