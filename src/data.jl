@@ -130,7 +130,9 @@ end
 
 "I may want to just compute a molecular formula from the graph"
 function get_molecular_formula(s)
-    jv = get_jview(s)
+    get_molecular_formula_from_jview(get_jview(s))
+end
+function get_molecular_formula_from_jview(jv)
     for sec in jv.Section
         if sec.TOCHeading == "Names and Identifiers"
             for sec2 in sec.Section
@@ -142,6 +144,9 @@ function get_molecular_formula(s)
     end
     error("not found")
 end
+
+get_sections(j) = j.Record.Section
+
 val_from_sec(s) = s.Information[1].Value.StringWithMarkup[1].String
 
 function get_smiles(s)

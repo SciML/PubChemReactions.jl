@@ -1,4 +1,5 @@
 using PubChemReactions, Catalyst, OrdinaryDiffEq, SteadyStateDiffEq, DiffEqCallbacks
+# this file should get deleted, but was a personal experiment to demonstrate why a reaction rate coefficient does not modify the equillibrium, just the time-to-ss
 
 # str = "H2O2 = H2O + O2"
 # s, p = PubChemReactions.parse_pathway_reaction(str)
