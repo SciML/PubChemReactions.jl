@@ -1,5 +1,8 @@
-using InvertedIndices
+using PubChemReactions, Catalyst, OrdinaryDiffEq
+using Test
+using InvertedIndices, Setfield
 using Unitful, Plots
+using JSON3
 
 # below was attempting to do this all manually
 # ss = @species glucose(t) g6p(t) f6p(t) var"f1,6bp"(t) gadp(t) [cid = 729] dhap(t)
@@ -17,6 +20,10 @@ using Unitful, Plots
 
 pid = "Reactome:R-HSA-70171"
 jrxns = PubChemReactions.pathway_json(pid)
+p = joinpath(@__DIR__, "../data/glycolysis.json")
+JSON3.write(p, jrxns)
+# @__DIR__
+jrxns = JSON3.read(read(p, String))
 aligned = PubChemReactions.is_reacts_prods_cids_aligned.(jrxns)
 all_rxns = PubChemReactions.get_pathway(pid)
 
@@ -39,7 +46,6 @@ good = rxns[Not(3)]
 r = rxns[3]
 Hydron = states(rs)[3]
 new_r = Reaction(r.rate, r.substrates, [r.products..., Hydron])
-rxns[1:2, 4:end]
 new_rxns = [rxns[1:2]..., new_r, rxns[4:end]...]
 
 @named new_rs = ReactionSystem(new_rxns, t)
@@ -51,16 +57,17 @@ sol = solve(prob, Rosenbrock23())
 
 sts = states(new_rs)
 
-(; Adenosinetriphosphate, var"alpha-D-Glucopyranose", Hydron, var"alpha-D-glucose 6-phosphate(2-)", var"Adenosine-diphosphate", var"beta-D-fructofuranose 6-phosphate(2-)", var"Fructose 1,6-bisphosphate", var"D-glyceraldehyde 3-phosphate(2-)", var"Glycerone phosphate(2-)", var"Diphosphopyridine nucleotide", var"Hydrogen phosphate", var"NADH dianion", var"3-phosphonato-D-glyceroyl phosphate(4-)", var"3-phosphonato-D-glycerate(3-)", var"2-phosphonato-D-glycerate(3-)", Phosphonatoenolpyruvate, Water, Pyruvate) = new_rs
+# I guess the name of alpha-D-Glucopyranose changed to (2S,3R,4S,5S,6R)-6-(hydroxymethyl)oxane-2,3,4,5-tetrol
+(; Adenosinetriphosphate, var"(2S,3R,4S,5S,6R)-6-(hydroxymethyl)oxane-2,3,4,5-tetrol", Hydron, var"alpha-D-glucose 6-phosphate(2-)", var"Adenosine-diphosphate", var"beta-D-fructofuranose 6-phosphate(2-)", var"Fructose 1,6-bisphosphate", var"D-glyceraldehyde 3-phosphate(2-)", var"Glycerone phosphate(2-)", var"Diphosphopyridine nucleotide", var"Hydrogen phosphate", var"NADH dianion", var"3-phosphonato-D-glyceroyl phosphate(4-)", var"3-phosphonato-D-glycerate(3-)", var"2-phosphonato-D-glycerate(3-)", Phosphonatoenolpyruvate, Water, Pyruvate) = new_rs
 
 
-@unpack Adenosinetriphosphate, var"alpha-D-Glucopyranose", Hydron, var"alpha-D-glucose 6-phosphate(2-)", var"Adenosine-diphosphate", var"beta-D-fructofuranose 6-phosphate(2-)", var"Fructose 1,6-bisphosphate", var"D-glyceraldehyde 3-phosphate(2-)", var"Glycerone phosphate(2-)", var"Diphosphopyridine nucleotide", var"Hydrogen phosphate", var"NADH dianion", var"3-phosphonato-D-glyceroyl phosphate(4-)", var"3-phosphonato-D-glycerate(3-)", var"2-phosphonato-D-glycerate(3-)", Phosphonatoenolpyruvate, Water, Pyruvate = new_rs
+@unpack Adenosinetriphosphate, var"(2S,3R,4S,5S,6R)-6-(hydroxymethyl)oxane-2,3,4,5-tetrol", Hydron, var"alpha-D-glucose 6-phosphate(2-)", var"Adenosine-diphosphate", var"beta-D-fructofuranose 6-phosphate(2-)", var"Fructose 1,6-bisphosphate", var"D-glyceraldehyde 3-phosphate(2-)", var"Glycerone phosphate(2-)", var"Diphosphopyridine nucleotide", var"Hydrogen phosphate", var"NADH dianion", var"3-phosphonato-D-glyceroyl phosphate(4-)", var"3-phosphonato-D-glycerate(3-)", var"2-phosphonato-D-glycerate(3-)", Phosphonatoenolpyruvate, Water, Pyruvate = new_rs
 
 defaults = [
     # these are from wikipedia https://en.wikipedia.org/wiki/Glycolysis#Free_energy_changes
     Adenosinetriphosphate => 1.85u"mM",
     var"Adenosine-diphosphate" => 0.14u"mM",
-    var"alpha-D-Glucopyranose" => 5.0u"mM",
+    var"(2S,3R,4S,5S,6R)-6-(hydroxymethyl)oxane-2,3,4,5-tetrol" => 5.0u"mM",
     var"alpha-D-glucose 6-phosphate(2-)" => 0.083u"mM",
     var"beta-D-fructofuranose 6-phosphate(2-)" => 0.014u"mM",
     var"Fructose 1,6-bisphosphate" => 0.031u"mM",
@@ -79,25 +86,93 @@ defaults = [
     var"NADH dianion" => 1.0u"mM",
     Water => 1.0u"mM"
 ]
+ddefs = Dict(defaults)
+
+for st in sts
+    m = st.val.metadata
+    @set! st.val.metadata[ModelingToolkit.VariableUnit] = u"mM"
+    # setmetadata(st, ModelingToolkit.VariableUnit, u"mM")
+end    
+
 @named def_rs = ReactionSystem(new_rxns, t; defaults)
 @test ModelingToolkit.validate(def_rs)
 
 new_sys = convert(ODESystem, def_rs)
+@test ModelingToolkit.validate(equations(dsys))
+
 new_prob = ODEProblem(new_sys, defaults, (0, 100))
-@test_throws Unitful.DimensionError solve(new_prob, Rosenbrock23())
+@test_throws MethodError solve(new_prob, Rosenbrock23()) # ForwardDiff
 @test_throws Unitful.DimensionError solve(new_prob, Tsit5())
+
+dsys = debug_system(new_sys)
+dprob = ODEProblem(dsys, defaults, (0, 100))
+solve(dprob, Tsit5()) # ERROR: DimensionError: -9.24986 mM² and 0.00322 mM³ are not dimensionally compatible.
+
 
 defaults = first.(defaults) .=> ustrip.(last.(defaults))
 @named def_rs = ReactionSystem(new_rxns, t; defaults)
 
 new_sys = convert(ODESystem, def_rs)
-new_prob = ODEProblem(new_sys, defaults, (0, 100))
-sol = solve(new_prob, Rosenbrock23())
-plot(sol)
+ustrip_prob = ODEProblem(new_sys, defaults, (0, 100))
+sol = solve(ustrip_prob, Rosenbrock23())
+# plot(sol)
 atp_ = sol[Adenosinetriphosphate]
-@test_broken atp_[end]
+@test_broken atp_[end] > atp_[begin]
 
 # next steps are adding bidirectionality to applicable reactions, reaction rates, and enzymes/hill rates
 
 # cids = unique(reduce(vcat, map(x -> x.cids, jrxns)))
 # proteins = filter(!isnothing, unique(reduce(vcat, map(x -> get(x, :protacxns, nothing), jrxns))))
+
+# using the reactions with double arrows from wikipedia
+bidir_rxns_idxs = [2, 4, 5, 6, 7, 8, 9]
+function reverse_rxn(r::Reaction)
+    Reaction(r.rate, r.products, r.substrates, r.prodstoich, r.substoich; only_use_rate=r.only_use_rate)
+end
+bidirs = reverse_rxn.(new_rxns[bidir_rxns_idxs])
+
+bidir_rxns = [new_rxns; bidirs]
+@parameters k[1:length(bidir_rxns)]
+for (i, r) in enumerate(bidir_rxns)
+    @set! global bidir_rxns[i].rate = k[i]
+end
+
+
+p_defs = collect(k .=> ones(17))
+all_defaults = [defaults; p_defs]
+@named bidir_rs = ReactionSystem(bidir_rxns, t; defaults=all_defaults)
+bidir_sys = convert(ODESystem, bidir_rs)
+bidir_prob = ODEProblem(bidir_sys, defaults, (0, 100))
+sol = solve(bidir_prob, Rosenbrock23())
+
+# plot(sol)
+
+# equations(bidir_sys)
+
+abstract type Ecosystem end
+
+
+abstract type Population end
+abstract type Individual end
+abstract type OrganSystem end
+abstract type Organ end
+abstract type Tissue end
+
+abstract type Cell end
+
+
+abstract type Leukoctye end
+struct TCell <: Leukoctye
+    TCR_Concentration
+end
+
+
+
+abstract type Organelle end
+abstract type Species end
+abstract type Protein end
+abstract type RNA end
+
+
+
+
