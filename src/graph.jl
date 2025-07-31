@@ -7,7 +7,7 @@ end
 
 struct AtomBondGraph
     g::SimpleGraph
-    atoms::Vector{Pair{Int,Int}}
+    atoms::Vector{Pair{Int, Int}}
 end
 
 struct CompoundCharge

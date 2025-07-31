@@ -5,7 +5,7 @@ pug_url_cid(cid) = joinpath(PUG_URL, "compound/cid/$(cid)/record/JSON")
 pug_view_url_cid(cid) = joinpath(PUG_VIEW_URL, "compound/cid/$(cid)/JSON")
 
 # houses all the data and getters
-function get_cids_from_cname(cname::AbstractString; verbose=false)
+function get_cids_from_cname(cname::AbstractString; verbose = false)
     cname = HTTP.escapeuri(cname)
     input_url = "$(PUG_URL)/compound/name/$(cname)/cids/JSON"
     verbose && @info input_url
@@ -21,7 +21,7 @@ function get_cids(cname::AbstractString)
     convert(Vector{Int}, get_cids_from_cname(cname)[:IdentifierList][:CID])
 end
 
-function get_json_from_cname(cname::AbstractString; verbose=false)
+function get_json_from_cname(cname::AbstractString; verbose = false)
     cname = HTTP.escapeuri(cname)
     input_url = "$(PUG_URL)/compound/name/$(cname)/record/JSON/"#?record_type=3d"
     verbose && @info input_url
@@ -55,7 +55,7 @@ function load_json_and_view_from_cid(cid)
     JSON3.read.(read.(fns))
 end
 
-function get_json_and_view(input_url; verbose=false)
+function get_json_and_view(input_url; verbose = false)
     verbose && @info input_url
     res = HTTP.get(input_url)
     if res.status == 200
@@ -69,7 +69,7 @@ function get_json_and_view(input_url; verbose=false)
     end
 end
 
-function get_json_from_cid(cid; verbose=false)
+function get_json_from_cid(cid; verbose = false)
     input_url = "$(PUG_URL)/compound/cid/$(cid)/record/JSON"
     verbose && @info input_url
     res = HTTP.get(input_url)
@@ -94,7 +94,9 @@ function compound_json_to_simplegraph(j)
 end
 
 get_graph(s) = isspecies(s) ? getmetadata(s, AtomBondGraph) : error("no graph for var $s")
-get_charge(s) = isspecies(s) ? getmetadata(s, CompoundCharge).charge : error("no charge for var $s")
+function get_charge(s)
+    isspecies(s) ? getmetadata(s, CompoundCharge).charge : error("no charge for var $s")
+end
 
 function get_reaction(eq)
     x = parse_rhea_equation(eq)
@@ -128,7 +130,9 @@ function get_mass(s)
     error("not found")
 end
 
-"I may want to just compute a molecular formula from the graph"
+"""
+I may want to just compute a molecular formula from the graph
+"""
 function get_molecular_formula(s)
     jv = get_jview(s)
     for sec in jv.Section
@@ -169,7 +173,9 @@ function get_chebi_id(csym)
     JSON3.read(String(res.body))[:Record][:Reference][1][:SourceID]
 end
 
-"fix this, its misleading because it doesn't return a bool"
+"""
+fix this, its misleading because it doesn't return a bool
+"""
 function is_mass_conserved(rxn)
     netmass(rxn) == 0
 end

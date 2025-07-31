@@ -8,9 +8,11 @@ function parse_rhea_equation(eq::AbstractString)
     search_compound.(reactants), search_compound.(products), rstoich, pstoich
 end
 
-"includes stoich values" 
+"""
+includes stoich values
+"""
 function rhea_to_reacts_prods(eq::AbstractString)
-    eq = foldl(replace, ARROWS .=> "=", init=eq)
+    eq = foldl(replace, ARROWS .=> "=", init = eq)
     lhs, rhs = split(eq, " = ")
     strip.(split(lhs, " + ")), strip.(split(rhs, " + "))
 end
@@ -19,12 +21,14 @@ function make_stoich_from_rhea(s)
     if startswith(s, r"(\d).* ")
         ss = split(s, " ")
         parse(Int, ss[1]), ss[2]
-    else 
+    else
         1, s
     end
 end
 
-"searches the Rhea reactions DB for reactions that include the species in args"
+"""
+searches the Rhea reactions DB for reactions that include the species in args
+"""
 function get_biochem_rxns(csym, csyms...)
     chebi_ids = get_chebi_id(csym)
     for c in csyms

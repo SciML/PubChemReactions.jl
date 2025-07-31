@@ -4,15 +4,15 @@ p = tempname()
 write(p, take!(io))
 
 struct Species
-    imgpath
+    imgpath::Any
 end
 struct Species2
-    s
+    s::Any
 end
 
 function Base.show(io::IO, ::MIME"text/markdown", s::Num)
     _, io_ = PubChemReactions.download_atomplot(s)
-    pl = Plots.plot(load(io_);size=(200, 200))
+    pl = Plots.plot(load(io_); size = (200, 200))
     p = abspath(joinpath(tempname(), ".png"))
     savefig(pl, p)
     @info p
@@ -27,7 +27,7 @@ end
 function Base.show(io::IO, ::MIME"text/markdown", s2::Species2)
     s = s2.s
     cid, io_ = PubChemReactions.download_atomplot(s)
-    pl = Plots.plot(load(io_); size=(200, 200), background_color = :transparent)
+    pl = Plots.plot(load(io_); size = (200, 200), background_color = :transparent)
     p = abspath(cid, ".png")
     savefig(pl, p)
     @info p
@@ -49,17 +49,14 @@ s = only(@species glucose(t))
 s
 typeof(s)
 
-
-
 v = @variables x
 s2 = Species2(s)
 s2
 x
 
-
 function Base.show(io::IO, ::MIME"text/markdown", s::Num)
     _, io_ = PubChemReactions.download_atomplot(s)
-    pl = Plots.plot(load(io_); size=(200, 200))
+    pl = Plots.plot(load(io_); size = (200, 200))
     p = abspath(joinpath(tempname(), ".png"))
     savefig(pl, p)
     @info p

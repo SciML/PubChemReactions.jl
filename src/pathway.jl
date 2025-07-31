@@ -1,10 +1,13 @@
 function pathway_json(pid)
     internal_pid = get_internal_pathwayid(pid)
-    url = join([PubChemReactions.RXN_TABLE_BASE_URL, "?infmt=json&outfmt=json&query={%22download%22:%22*%22,%22collection%22:%22pathwayreaction%22,%22where%22:{%22ands%22:[{%22pathwayid%22:%22$(internal_pid)%22}]},%22order%22:[%22relevancescore,desc%22],%22start%22:1,%22limit%22:10000000,%22downloadfilename%22:%22$(internal_pid)_pathwayreaction%22}"])
+    url = join([PubChemReactions.RXN_TABLE_BASE_URL,
+        "?infmt=json&outfmt=json&query={%22download%22:%22*%22,%22collection%22:%22pathwayreaction%22,%22where%22:{%22ands%22:[{%22pathwayid%22:%22$(internal_pid)%22}]},%22order%22:[%22relevancescore,desc%22],%22start%22:1,%22limit%22:10000000,%22downloadfilename%22:%22$(internal_pid)_pathwayreaction%22}"])
     JSON3.read(get_page(url))
 end
 
-"need to fix rate handling, defaulting all to 1 sucks"
+"""
+need to fix rate handling, defaulting all to 1 sucks
+"""
 function get_pathway(pid)
     jrxns = pathway_json(pid)
     pathway_reaction_to_reaction.(jrxns)
@@ -34,7 +37,7 @@ function cid_from_a_tag(str)
     t = Gumbo.text(a)
     url = a.attributes["href"]
     paths = splitpath(url)
-    paths[end-1] != "compound" && return (str, nothing) # not protein
+    paths[end - 1] != "compound" && return (str, nothing) # not protein
     t, paths[end]
 end
 
@@ -56,7 +59,9 @@ function get_internal_pathwayid(pid)
     url = joinpath(PC_ROOT, "pathway/$(pid)")
     h = get_html(url).root
     ms = eachmatch(Selector("meta"), h)
-    m = only(filter(x -> haskey(x.attributes, "name") && (x.attributes["name"] == "pubchem_uid_value"), ms))
+    m = only(filter(
+        x -> haskey(x.attributes, "name") &&
+             (x.attributes["name"] == "pubchem_uid_value"), ms))
     m.attributes["content"]
 end
 
@@ -68,7 +73,9 @@ end
 
 to_arr(xs) = isa(xs, AbstractArray) ? xs : [xs]
 
-"check that the reaction str `jr.reaction`, when parsed, has the same length as the rcids and pcids from the json"
+"""
+check that the reaction str `jr.reaction`, when parsed, has the same length as the rcids and pcids from the json
+"""
 function is_reacts_prods_cids_aligned(jr)
     rxn_str = jr.reaction
     rp = pc_pathway_rxn_to_rp_cids(jr)
@@ -76,7 +83,9 @@ function is_reacts_prods_cids_aligned(jr)
     length.(rp) == length.(sp)
 end
 
-"todo: fix that all reactions are unidirectional "
+"""
+todo: fix that all reactions are unidirectional
+"""
 function pathway_reaction_to_reaction(jr)
     rcids, pcids = pc_pathway_rxn_to_rp_cids(jr)
     rs = species_from_cid.(rcids)
