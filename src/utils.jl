@@ -1,5 +1,6 @@
-function make_at_species(sps; current_name=true)
-    name = current_name ? nameof(operation(Symbolics.value(sps))) : """var"$(get_name(sps))\""""
+function make_at_species(sps; current_name = true)
+    name = current_name ? nameof(operation(Symbolics.value(sps))) :
+           """var"$(get_name(sps))\""""
     """@species $(name)(t) [cid = $(get_cid(sps)), save = true, load = true]"""
 end
 
@@ -16,12 +17,12 @@ function eqs_to_mathematica(eqs)
 end
 
 function rxns_to_wl(rxns)
-
 end
 
 function cid_from_substance_json(x)
     for s in x.Record.Section
-        s.TOCHeading == "Related Records" && return splitdir(s.Section[1].Information[1].Value.StringWithMarkup[1].Markup[1].URL)[end]
+        s.TOCHeading == "Related Records" &&
+            return splitdir(s.Section[1].Information[1].Value.StringWithMarkup[1].Markup[1].URL)[end]
     end
     nothing
 end

@@ -14,7 +14,7 @@ co_cpd = getmetadata(CO, Compound);
 
 # test manually passing in PubChem data
 @variables CO(t)
-CO = PubChemReactions.tospecies(CO; jsons=PubChemReactions.get_json_and_view_from_cid(281))
+CO = PubChemReactions.tospecies(CO; jsons = PubChemReactions.get_json_and_view_from_cid(281))
 @test getmetadata(CO, Compound).name == "Carbon monoxide"
 
 @species N2_gas(t) [name = "N2"]
@@ -36,7 +36,7 @@ ag = getmetadata(N2_gas, PubChemReactions.AtomBondGraph)
 @species Water(t)
 cid = get_cid(Water)
 p = joinpath(PubChemReactions.COMPOUNDS_DIR, string(cid))
-isdir(p) && rm(p; recursive=true)
+isdir(p) && rm(p; recursive = true)
 @test !isdir(p)
 @species Water(t) [save = true]
 @test isdir(p)

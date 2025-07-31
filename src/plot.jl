@@ -6,13 +6,15 @@ function download_atomplot(s)
     cid, io
 end
 
-"uses the 2D image provided by PubChem, rather than trying to use the graph data"
-function atomplot(s; verbose=false)
+"""
+uses the 2D image provided by PubChem, rather than trying to use the graph data
+"""
+function atomplot(s; verbose = false)
     cid, io = download_atomplot(s)
     sname = get_name(s)
     mf = get_molecular_formula(s)
     title = "$cid: $mf | $sname"
-    verbose && @info(cid = cid, name = sname, formula = mf)
+    verbose && @info(cid=cid, name=sname, formula=mf)
     p = Plots.plot(load(io))
     title!(p, title)
     display(p)
@@ -45,11 +47,9 @@ function open_in_default_browser(url::AbstractString)::Bool
 end
 
 """
-
 not all compounds have a 3d plot so it could open a 404'd page
 
 example https://pubchem.ncbi.nlm.nih.gov/compound/5793#section=3D-Conformer&fullscreen=true
-
 """
 function atomplot3d(s)
     cid = string(get_cid(s))

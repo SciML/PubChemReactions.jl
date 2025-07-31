@@ -65,7 +65,11 @@ brxn = balance(rxn)
 # TODO try this one in Mathematica
 # 2 MnO4– + 5 H2O2 + 6 H+ → 2 Mn2+ + 5 O2 + 8 H2O
 # 2 H2O2 → O2 + 2 H2O
-s = @species var"Permanganate"(t) [cid = 24401, save = true, load = true] var"Hydrogen peroxide"(t) [cid = 784, save = true, load = true] var"Hydron"(t) [cid = 1038, save = true, load = true] var"Manganese(2+)"(t) [cid = 27845, save = true, load = true] var"Oxygen"(t) [cid = 977, save = true, load = true] var"Water"(t) [cid = 962, save = true, load = true]
+s = @species var"Permanganate"(t) [cid = 24401, save = true, load = true] var"Hydrogen peroxide"(t) [
+    cid = 784, save = true, load = true] var"Hydron"(t) [
+    cid = 1038, save = true, load = true] var"Manganese(2+)"(t) [
+    cid = 27845, save = true, load = true] var"Oxygen"(t) [
+    cid = 977, save = true, load = true] var"Water"(t) [cid = 962, save = true, load = true]
 rxn = Reaction(1, s[1:3], s[4:6])
 push!(rxns, rxn)
 @test_throws InexactError balance(rxn)
@@ -85,5 +89,3 @@ push!(rxns, rxn)
 # rxn = Reaction(1, [O3, OH], [HO2, O2])
 # eqs = balance_eqs(rxn)
 # weqs = eqs_to_mathematica(eqs)
-
-

@@ -1,24 +1,39 @@
-"also probably bad idea maybe"
-Base.diff(rxn::Catalyst.Reaction) = replace_atom_counts_with_elements(mergewith(-, reverse(atom_counts(rxn))...))
+"""
+also probably bad idea maybe
+"""
+function Base.diff(rxn::Catalyst.Reaction)
+    replace_atom_counts_with_elements(mergewith(-, reverse(atom_counts(rxn))...))
+end
 
-function isbalanced(substrates, products; substoich=ones(length(substrates)), prodstoich=ones(length(products)))
+function isbalanced(substrates, products; substoich = ones(length(substrates)),
+        prodstoich = ones(length(products)))
     atom_counts(substrates, substoich) == atom_counts(products, prodstoich)
 end
 
-"check that the element counts in substrates is equal to products"
+"""
+check that the element counts in substrates is equal to products
+"""
 function isbalanced(rxn)
-    all(hasmetadata.(species(rxn), Compound)) || error("some species do not have atom graph metadata")
-    all(hasmetadata.(species(rxn), AtomBondGraph)) || error("some species do not have atom graph metadata")
-    isbalanced(rxn.substrates, rxn.products; substoich=rxn.substoich, prodstoich=rxn.prodstoich)
+    all(hasmetadata.(species(rxn), Compound)) ||
+        error("some species do not have atom graph metadata")
+    all(hasmetadata.(species(rxn), AtomBondGraph)) ||
+        error("some species do not have atom graph metadata")
+    isbalanced(rxn.substrates, rxn.products; substoich = rxn.substoich, prodstoich = rxn.prodstoich)
 end
 
-"check that the element counts in sub"
+"""
+check that the element counts in sub
+"""
 function isbalanced(rn::ReactionSystem)
     all(isbalanced.(reactions(rn)))
 end
 
-replace_atom_counts_with_elements(atomcounts) = PeriodicTable.elements[first.(atomcounts)] .=> last.(atomcounts)
-replace_atom_counts_with_elements(atomcounts::Dict) = Dict(PeriodicTable.elements[collect(keys(atomcounts))] .=> values(atomcounts))
+function replace_atom_counts_with_elements(atomcounts)
+    PeriodicTable.elements[first.(atomcounts)] .=> last.(atomcounts)
+end
+function replace_atom_counts_with_elements(atomcounts::Dict)
+    Dict(PeriodicTable.elements[collect(keys(atomcounts))] .=> values(atomcounts))
+end
 element_counts(x) = replace_atom_counts_with_elements(atom_counts(x))
 element_counts(x::Reaction) = replace_atom_counts_with_elements.(atom_counts(x))
 
@@ -28,8 +43,10 @@ function atom_counts(s::Num)
     countmap(last.(aps))
 end
 atom_counts(xs::Vector{Num}) = mergewith(+, atom_counts.(xs)...)
-atom_counts(s::S) where {S<:SymbolicUtils.Symbolic} = atom_counts(Num(s))
-atom_counts(rxn::Reaction) = (atom_counts(rxn.substrates, rxn.substoich), atom_counts(rxn.products, rxn.prodstoich))
+atom_counts(s::S) where {S <: SymbolicUtils.Symbolic} = atom_counts(Num(s))
+function atom_counts(rxn::Reaction)
+    (atom_counts(rxn.substrates, rxn.substoich), atom_counts(rxn.products, rxn.prodstoich))
+end
 
 function atom_counts(speciess, stoichs)
     countmaps = atom_counts.(speciess)
@@ -50,11 +67,9 @@ get_elements(s::Vector) = Set(reduce(vcat, get_elements.(s)))
 
 # """
 
-
 # # http://mathgene.usc.es/matlab-profs-quimica/reacciones.pdf
 
 # should i try to catch underdetermined soon, or just let LA give SingularException?
-
 
 # """
 # function balance(substrates, products; k=nothing, add_constraint_eq=true, force_integer_stoich=true, short_circuit=true, verbose=true)
@@ -87,7 +102,8 @@ get_elements(s::Vector) = Set(reduce(vcat, get_elements.(s)))
 #     rxn
 # end
 
-function balance_eqs(x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq=false)
+function balance_eqs(
+        x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq = false)
     eqs = Equation[]
     for (i, e) in enumerate(occuring_elements)
         lhs = 0
@@ -113,10 +129,13 @@ function balance_eqs(x, occuring_elements, atomcounts, chgs, n_specs, n_subs; ad
     eqs
 end
 
-"refactor"
+"""
+refactor
+"""
 function balance_setup(substrates, products)
     all_species = vcat(substrates, products)
-    all(PubChemReactions.isspecies.(all_species)) || error("provide chemcial species (with graphs)")
+    all(PubChemReactions.isspecies.(all_species)) ||
+        error("provide chemcial species (with graphs)")
 
     occuring_elements = collect(PubChemReactions.get_elements(all_species))
     atomcounts = PubChemReactions.atom_counts.(all_species)
@@ -131,13 +150,16 @@ function balance_setup(substrates, products)
     occuring_elements, atomcounts, chgs, n_specs, n_subs
 end
 
-function balance_eqs(substrates, products; add_constraint_eq=true)
-    occuring_elements, atomcounts, chgs, n_specs, n_subs = balance_setup(substrates, products)
+function balance_eqs(substrates, products; add_constraint_eq = true)
+    occuring_elements, atomcounts, chgs, n_specs,
+    n_subs = balance_setup(substrates, products)
     @variables x[1:n_specs]
     balance_eqs(x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq)
 end
 
-balance_eqs(rxn::Reaction; add_constraint_eq=true) = balance_eqs(rxn.substrates, rxn.products; add_constraint_eq)
+function balance_eqs(rxn::Reaction; add_constraint_eq = true)
+    balance_eqs(rxn.substrates, rxn.products; add_constraint_eq)
+end
 eq_to_term(eq) = eq.lhs - eq.rhs
 
 function atom_matrix(rxn::Reaction)
