@@ -42,3 +42,4 @@ reactants, products, rstoich, pstoich = PubChemReactions.parse_rhea_equation(eq)
 # this is where we'd like to do some lookup on the reactants and products to make an educated guess about the rate law
 rxn = Reaction(1, reactants, products, rstoich, pstoich; only_use_rate = true)
 ```
+
