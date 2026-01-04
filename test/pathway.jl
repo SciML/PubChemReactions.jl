@@ -12,7 +12,7 @@ sts = states(sys)
 prob = ODEProblem(sys, sts .=> 1.0, (0, 100.0))
 sol = OrdinaryDiffEq.solve(prob, Tsit5())
 
-# # Reactome Glycolysis 
+# # Reactome Glycolysis
 pid = "Reactome:R-HSA-70171"
 rxns2 = PubChemReactions.get_pathway(pid)
 @named rs2 = ReactionSystem(rxns2, Catalyst.DEFAULT_IV)

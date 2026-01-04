@@ -18,12 +18,12 @@ function get_cids_from_cname(cname::AbstractString; verbose = false)
 end
 
 function get_cids(cname::AbstractString)
-    convert(Vector{Int}, get_cids_from_cname(cname)[:IdentifierList][:CID])
+    return convert(Vector{Int}, get_cids_from_cname(cname)[:IdentifierList][:CID])
 end
 
 function get_json_from_cname(cname::AbstractString; verbose = false)
     cname = HTTP.escapeuri(cname)
-    input_url = "$(PUG_URL)/compound/name/$(cname)/record/JSON/"#?record_type=3d"
+    input_url = "$(PUG_URL)/compound/name/$(cname)/record/JSON/" #?record_type=3d"
     verbose && @info input_url
     res = HTTP.get(input_url)
     if res.status == 200
@@ -35,14 +35,14 @@ end
 
 function get_json_and_view_from_cname(cname::AbstractString; kwargs...)
     cname = HTTP.escapeuri(cname)
-    input_url = "$(PUG_URL)/compound/name/$(cname)/record/JSON/"#?record_type=3d" # FIX
-    get_json_and_view(input_url; kwargs...)
+    input_url = "$(PUG_URL)/compound/name/$(cname)/record/JSON/" #?record_type=3d" # FIX
+    return get_json_and_view(input_url; kwargs...)
 end
 
 function get_json_and_view_from_cid(cid; kwargs...)
     cid = HTTP.escapeuri(cid)
-    input_url = "$(PUG_URL)/compound/cid/$(cid)/record/JSON/"#?record_type=3d" # FIX
-    get_json_and_view(input_url; kwargs...)
+    input_url = "$(PUG_URL)/compound/cid/$(cid)/record/JSON/" #?record_type=3d" # FIX
+    return get_json_and_view(input_url; kwargs...)
 end
 
 compound_url(cid::AbstractString) = joinpath(PC_ROOT, "compound/$cid")
@@ -52,7 +52,7 @@ compound_fns(cid) = joinpath(COMPOUNDS_DIR, string(cid)) .* ("/pug.json", "/pug_
 function load_json_and_view_from_cid(cid)
     fns = compound_fns(cid)
     # all(isfile.(fns))
-    JSON3.read.(read.(fns))
+    return JSON3.read.(read.(fns))
 end
 
 function get_json_and_view(input_url; verbose = false)
@@ -90,34 +90,34 @@ function compound_json_to_simplegraph(j)
         bond_pairs = []
     end
     g = build_atom_graph(length(atom_pairs), bond_pairs)
-    g, atom_pairs
+    return g, atom_pairs
 end
 
 get_graph(s) = isspecies(s) ? getmetadata(s, AtomBondGraph) : error("no graph for var $s")
 function get_charge(s)
-    isspecies(s) ? getmetadata(s, CompoundCharge).charge : error("no charge for var $s")
+    return isspecies(s) ? getmetadata(s, CompoundCharge).charge : error("no charge for var $s")
 end
 
 function get_reaction(eq)
     x = parse_rhea_equation(eq)
-    Reaction(1, x[1], x[2])
+    return Reaction(1, x[1], x[2])
     # balance(x[1], x[2])
 end
 
 function get_cid(s)
-    getmetadata(s, Compound).cid
+    return getmetadata(s, Compound).cid
 end
 
 function get_j(s)
-    getmetadata(s, Compound).json.PC_Compounds[1]
+    return getmetadata(s, Compound).json.PC_Compounds[1]
 end
 
 function get_jview(s)
-    getmetadata(s, Compound).json_view.Record
+    return getmetadata(s, Compound).json_view.Record
 end
 
 function get_name(s)
-    getmetadata(s, Compound).name
+    return getmetadata(s, Compound).name
 end
 
 function get_mass(s)
@@ -170,25 +170,25 @@ function get_chebi_id(csym)
     cid = get_cid(csym)
     input_url = "$PUG_VIEW_URL/data/compound/$cid/JSON/?heading=Biochemical+Reactions"
     res = HTTP.get(input_url)
-    JSON3.read(String(res.body))[:Record][:Reference][1][:SourceID]
+    return JSON3.read(String(res.body))[:Record][:Reference][1][:SourceID]
 end
 
 """
 fix this, its misleading because it doesn't return a bool
 """
 function is_mass_conserved(rxn)
-    netmass(rxn) == 0
+    return netmass(rxn) == 0
 end
 
 function netmass(rxn)
     subs, prods = rxn_masses(rxn)
-    prods - subs
+    return prods - subs
 end
 
 function rxn_masses(rxn)
     subs = sum(rxn.substoich .* get_mass.(rxn.substrates))
     prods = sum(rxn.prodstoich .* get_mass.(rxn.products))
-    subs, prods
+    return subs, prods
 end
 
 pubchem_search(s) = open_in_default_browser(joinpath(PC_ROOT, "#query=$s"))

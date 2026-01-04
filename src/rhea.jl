@@ -5,7 +5,7 @@ function parse_rhea_equation(eq::AbstractString)
     rstoich, reactants = first.(rs), last.(rs)
     pstoich, products = first.(ps), last.(ps)
 
-    search_compound.(reactants), search_compound.(products), rstoich, pstoich
+    return search_compound.(reactants), search_compound.(products), rstoich, pstoich
 end
 
 """
@@ -14,11 +14,11 @@ includes stoich values
 function rhea_to_reacts_prods(eq::AbstractString)
     eq = foldl(replace, ARROWS .=> "=", init = eq)
     lhs, rhs = split(eq, " = ")
-    strip.(split(lhs, " + ")), strip.(split(rhs, " + "))
+    return strip.(split(lhs, " + ")), strip.(split(rhs, " + "))
 end
 
 function make_stoich_from_rhea(s)
-    if startswith(s, r"(\d).* ")
+    return if startswith(s, r"(\d).* ")
         ss = split(s, " ")
         parse(Int, ss[1]), ss[2]
     else

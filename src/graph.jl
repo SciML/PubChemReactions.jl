@@ -19,7 +19,7 @@ function build_atom_graph(n_vertices, bond_pairs)
     for bp in bond_pairs
         add_edge!(g, bp)
     end
-    g
+    return g
 end
 
 Catalyst.species(rxn::Reaction) = unique(reduce(vcat, (rxn.substrates, rxn.products)))

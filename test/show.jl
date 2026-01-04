@@ -17,11 +17,11 @@ function Base.show(io::IO, ::MIME"text/markdown", s::Num)
     savefig(pl, p)
     @info p
     # save(p, pl)
-    print(io, "![$(get_name(s))]($(p))")
+    return print(io, "![$(get_name(s))]($(p))")
 end
 
 function Base.show(io, ::MIME"text/markdown", s::Species)
-    print(io, "![]($(s.imgpath))")
+    return print(io, "![]($(s.imgpath))")
 end
 
 function Base.show(io::IO, ::MIME"text/markdown", s2::Species2)
@@ -32,7 +32,7 @@ function Base.show(io::IO, ::MIME"text/markdown", s2::Species2)
     savefig(pl, p)
     @info p
     # save(p, pl)
-    print(io, "![]($(p))")
+    return print(io, "![]($(p))")
 end
 
 cid, io = PubChemReactions.download_atomplot(s)
@@ -61,7 +61,7 @@ function Base.show(io::IO, ::MIME"text/markdown", s::Num)
     savefig(pl, p)
     @info p
     # save(p, pl)
-    print(io, "![$(get_name(s))]($(p))")
+    return print(io, "![$(get_name(s))]($(p))")
 end
 
 s = only(@species glucose(t))
