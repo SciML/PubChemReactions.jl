@@ -3,7 +3,7 @@ function download_atomplot(s)
     io = IOBuffer()
     url = joinpath(PC_ROOT, "image/imgsrv.fcgi?cid=$(cid)&t=l")
     Downloads.download(url, io)
-    cid, io
+    return cid, io
 end
 
 """
@@ -14,21 +14,21 @@ function atomplot(s; verbose = false)
     sname = get_name(s)
     mf = get_molecular_formula(s)
     title = "$cid: $mf | $sname"
-    verbose && @info(cid=cid, name=sname, formula=mf)
+    verbose && @info(cid = cid, name = sname, formula = mf)
     p = Plots.plot(load(io))
     title!(p, title)
-    display(p)
+    return display(p)
 end
 
 # copied from https://github.com/fonsp/Pluto.jl/blob/6f5876228671f9d89d6f01cedc10221d83f012d6/src/webserver/WebServer.jl#L10-L33
 function detectwsl()
-    Sys.islinux() &&
+    return Sys.islinux() &&
         isfile("/proc/sys/kernel/osrelease") &&
         occursin(r"Microsoft|WSL"i, read("/proc/sys/kernel/osrelease", String))
 end
 
 function open_in_default_browser(url::AbstractString)::Bool
-    try
+    return try
         if Sys.isapple()
             Base.run(`open $url`)
             true
@@ -54,11 +54,11 @@ example https://pubchem.ncbi.nlm.nih.gov/compound/5793#section=3D-Conformer&full
 function atomplot3d(s)
     cid = string(get_cid(s))
     url = joinpath(PC_ROOT, "compound", "$cid#section=3D-Conformer&fullscreen=true")
-    open_in_default_browser(url)
+    return open_in_default_browser(url)
 end
 
 function atomplot2d(s)
     cid = string(get_cid(s))
     url = joinpath(PC_ROOT, "compound", "$cid#section=2D-Structure&fullscreen=true")
-    open_in_default_browser(url)
+    return open_in_default_browser(url)
 end

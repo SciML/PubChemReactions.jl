@@ -2,12 +2,14 @@
 also probably bad idea maybe
 """
 function Base.diff(rxn::Catalyst.Reaction)
-    replace_atom_counts_with_elements(mergewith(-, reverse(atom_counts(rxn))...))
+    return replace_atom_counts_with_elements(mergewith(-, reverse(atom_counts(rxn))...))
 end
 
-function isbalanced(substrates, products; substoich = ones(length(substrates)),
-        prodstoich = ones(length(products)))
-    atom_counts(substrates, substoich) == atom_counts(products, prodstoich)
+function isbalanced(
+        substrates, products; substoich = ones(length(substrates)),
+        prodstoich = ones(length(products))
+    )
+    return atom_counts(substrates, substoich) == atom_counts(products, prodstoich)
 end
 
 """
@@ -18,21 +20,21 @@ function isbalanced(rxn)
         error("some species do not have atom graph metadata")
     all(hasmetadata.(species(rxn), AtomBondGraph)) ||
         error("some species do not have atom graph metadata")
-    isbalanced(rxn.substrates, rxn.products; substoich = rxn.substoich, prodstoich = rxn.prodstoich)
+    return isbalanced(rxn.substrates, rxn.products; substoich = rxn.substoich, prodstoich = rxn.prodstoich)
 end
 
 """
 check that the element counts in sub
 """
 function isbalanced(rn::ReactionSystem)
-    all(isbalanced.(reactions(rn)))
+    return all(isbalanced.(reactions(rn)))
 end
 
 function replace_atom_counts_with_elements(atomcounts)
-    PeriodicTable.elements[first.(atomcounts)] .=> last.(atomcounts)
+    return PeriodicTable.elements[first.(atomcounts)] .=> last.(atomcounts)
 end
 function replace_atom_counts_with_elements(atomcounts::Dict)
-    Dict(PeriodicTable.elements[collect(keys(atomcounts))] .=> values(atomcounts))
+    return Dict(PeriodicTable.elements[collect(keys(atomcounts))] .=> values(atomcounts))
 end
 element_counts(x) = replace_atom_counts_with_elements(atom_counts(x))
 element_counts(x::Reaction) = replace_atom_counts_with_elements.(atom_counts(x))
@@ -40,12 +42,12 @@ element_counts(x::Reaction) = replace_atom_counts_with_elements.(atom_counts(x))
 function atom_counts(s::Num)
     c = getmetadata(s, AtomBondGraph)
     aps = c.atoms
-    countmap(last.(aps))
+    return countmap(last.(aps))
 end
 atom_counts(xs::Vector{Num}) = mergewith(+, atom_counts.(xs)...)
 atom_counts(s::S) where {S <: SymbolicUtils.Symbolic} = atom_counts(Num(s))
 function atom_counts(rxn::Reaction)
-    (atom_counts(rxn.substrates, rxn.substoich), atom_counts(rxn.products, rxn.prodstoich))
+    return (atom_counts(rxn.substrates, rxn.substoich), atom_counts(rxn.products, rxn.prodstoich))
 end
 
 function atom_counts(speciess, stoichs)
@@ -57,7 +59,7 @@ function atom_counts(speciess, stoichs)
         end
     end
 
-    mergewith(+, countmaps...)
+    return mergewith(+, countmaps...)
 end
 
 get_elements(s) = unique(last.(get_graph(s).atoms))
@@ -73,7 +75,7 @@ get_elements(s::Vector) = Set(reduce(vcat, get_elements.(s)))
 
 # """
 # function balance(substrates, products; k=nothing, add_constraint_eq=true, force_integer_stoich=true, short_circuit=true, verbose=true)
-#     # hack for now 
+#     # hack for now
 #     k = k === nothing ? 1 : k
 #     # might want an early exit
 #     short_circuit && isbalanced(substrates, products) && return Reaction(k, substrates, products)
@@ -83,7 +85,7 @@ get_elements(s::Vector) = Set(reduce(vcat, get_elements.(s)))
 
 #     occuring_elements, atomcounts, chgs, n_specs, n_subs = balance_setup(substrates, products)
 
-#     @polyvar x[1:n_specs] # couldn't get to work with @variables 
+#     @polyvar x[1:n_specs] # couldn't get to work with @variables
 #     eqs = balance_eqs(x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq)
 #     ts = eq_to_term.(eqs)
 #     newt = groebner(ts)
@@ -103,7 +105,8 @@ get_elements(s::Vector) = Set(reduce(vcat, get_elements.(s)))
 # end
 
 function balance_eqs(
-        x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq = false)
+        x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq = false
+    )
     eqs = Equation[]
     for (i, e) in enumerate(occuring_elements)
         lhs = 0
@@ -126,7 +129,7 @@ function balance_eqs(
         push!(eqs, lhs ~ rhs)
     end
     add_constraint_eq && push!(eqs, x[end] ~ 1)
-    eqs
+    return eqs
 end
 
 """
@@ -147,18 +150,18 @@ function balance_setup(substrates, products)
     has_charges = !all(charges .== 0)
     n_specs = length(all_species)
 
-    occuring_elements, atomcounts, chgs, n_specs, n_subs
+    return occuring_elements, atomcounts, chgs, n_specs, n_subs
 end
 
 function balance_eqs(substrates, products; add_constraint_eq = true)
     occuring_elements, atomcounts, chgs, n_specs,
-    n_subs = balance_setup(substrates, products)
+        n_subs = balance_setup(substrates, products)
     @variables x[1:n_specs]
-    balance_eqs(x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq)
+    return balance_eqs(x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq)
 end
 
 function balance_eqs(rxn::Reaction; add_constraint_eq = true)
-    balance_eqs(rxn.substrates, rxn.products; add_constraint_eq)
+    return balance_eqs(rxn.substrates, rxn.products; add_constraint_eq)
 end
 eq_to_term(eq) = eq.lhs - eq.rhs
 
@@ -170,5 +173,5 @@ function atom_matrix(rxn::Reaction)
     vars = only(@variables x[1:length(species(rxn))])
     vars = collect(vars)
     a, b, islinear = Symbolics.linear_expansion(ts, vars)
-    a
+    return a
 end

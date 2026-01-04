@@ -32,7 +32,7 @@ ag = getmetadata(N2_gas, PubChemReactions.AtomBondGraph)
 @test PubChemReactions.get_charge.([Hplus, OHminus, H2O]) == [1, -1, 0]
 # @test isbalanced(balance(Reaction(1, [Hplus, OHminus], [H2O])))
 
-# save/load 
+# save/load
 @species Water(t)
 cid = get_cid(Water)
 p = joinpath(PubChemReactions.COMPOUNDS_DIR, string(cid))
