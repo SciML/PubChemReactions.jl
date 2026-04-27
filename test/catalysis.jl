@@ -20,5 +20,5 @@ sol2 = OrdinaryDiffEq.solve(prob2, Tsit5(); callback = cb)
 t2 = sol2.t[end]
 
 # the equilibrium is the same
-@test isapprox(sol[end], sol2[end]; atol = 1.0e-4)
+@test isapprox(sol.u[end], sol2.u[end]; atol = 1.0e-4)
 @test t1 > 5 * t2
