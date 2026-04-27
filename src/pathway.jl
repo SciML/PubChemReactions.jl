@@ -14,7 +14,13 @@ need to fix rate handling, defaulting all to 1 sucks
 """
 function get_pathway(pid)
     jrxns = pathway_json(pid)
-    return pathway_reaction_to_reaction.(jrxns)
+    # Skip pathway entries that have neither reactant nor product cids — Catalyst's
+    # `Reaction` constructor (correctly) rejects reactions with no species at all.
+    valid = filter(jrxns) do jr
+        rcids, pcids = pc_pathway_rxn_to_rp_cids(jr)
+        !(isempty(rcids) && isempty(pcids))
+    end
+    return pathway_reaction_to_reaction.(valid)
 end
 
 function species_(s, cid)
@@ -95,7 +101,11 @@ todo: fix that all reactions are unidirectional
 """
 function pathway_reaction_to_reaction(jr)
     rcids, pcids = pc_pathway_rxn_to_rp_cids(jr)
-    rs = species_from_cid.(rcids)
-    ps = species_from_cid.(pcids)
+    # Catalyst's `Reaction` constructor rejects untyped (`Vector{Any}`) substrate /
+    # product vectors. Broadcasting `species_from_cid` over an empty container would
+    # yield `Any[]`, so we use a typed empty vector when the cid list is empty.
+    T = Symbolics.BasicSymbolic{Real}
+    rs = isempty(rcids) ? T[] : convert(Vector{T}, species_from_cid.(rcids))
+    ps = isempty(pcids) ? T[] : convert(Vector{T}, species_from_cid.(pcids))
     return Reaction(1, rs, ps)
 end

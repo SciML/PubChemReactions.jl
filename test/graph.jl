@@ -2,6 +2,10 @@ using PubChemReactions, Catalyst, Test
 using OrdinaryDiffEq
 using Graphs
 
+# Use the PubChem-aware @species macro from PubChemReactions explicitly to avoid
+# ambiguity with `Catalyst.@species` (both are now in scope via `using`).
+using PubChemReactions: @species
+
 C6H12O6 = PubChemReactions.search_compound("glucose")
 H2O = PubChemReactions.search_compound("water")
 

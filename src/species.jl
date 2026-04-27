@@ -27,6 +27,10 @@ function set_species_metadata(s, j, jview)
         s, PubChemReactions.CompoundCharge,
         PubChemReactions.CompoundCharge(j.PC_Compounds[1].charge)
     )
+    # Mark this symbol as a Catalyst species so it can be used as a substrate/product in
+    # `Reaction(...)` under Catalyst v16+, which validates reactants via the
+    # `Catalyst.VariableSpecies` metadata.
+    s = setmetadata(s, Catalyst.VariableSpecies, true)
     return s
 end
 

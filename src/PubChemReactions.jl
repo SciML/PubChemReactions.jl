@@ -33,7 +33,11 @@ include("pathway.jl")
 include("utils.jl")
 
 export Compound
-export @species_str, @species
+# NOTE: do not export `@species` — it would conflict with `Catalyst.@species`.
+# Use `PubChemReactions.@species` to invoke the PubChem-aware version that fetches
+# compound data via `cid`, `name`, `save`, `load` metadata. The plain Catalyst
+# `@species` (available via `using Catalyst`) is unaffected.
+export @species_str
 export get_cid, get_name, get_charge, get_graph
 export atom_counts, element_counts, atom_matrix
 export save_species, load_species, isspecies
