@@ -1,0 +1,4 @@
+# "HSA" appears in Reactome stable identifiers (e.g. R-HSA-70171, HSA = Homo sapiens)
+# and must not be "corrected" to "HAS".
+[default.extend-words]
+HSA = "HSA"
