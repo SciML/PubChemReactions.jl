@@ -1,11 +1,10 @@
 using Pkg
 using Test
+using PubChemReactions, Catalyst, OrdinaryDiffEq
 
 const GROUP = get(ENV, "GROUP", "All")
 
 if GROUP == "All" || GROUP == "Core"
-    using PubChemReactions, Catalyst, OrdinaryDiffEq
-
     @parameters t
 
     @testset "PubChemReactions.jl" begin
