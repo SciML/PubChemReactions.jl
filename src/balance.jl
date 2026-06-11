@@ -45,7 +45,7 @@ function atom_counts(s::Num)
     return countmap(last.(aps))
 end
 atom_counts(xs::Vector{Num}) = mergewith(+, atom_counts.(xs)...)
-atom_counts(s::S) where {S <: SymbolicUtils.Symbolic} = atom_counts(Num(s))
+atom_counts(s::S) where {S <: SymbolicUtils.BasicSymbolic} = atom_counts(Num(s))
 function atom_counts(rxn::Reaction)
     return (atom_counts(rxn.substrates, rxn.substoich), atom_counts(rxn.products, rxn.prodstoich))
 end
