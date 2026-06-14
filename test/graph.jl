@@ -2,6 +2,8 @@ using PubChemReactions, Catalyst, Test
 using OrdinaryDiffEq
 using Graphs
 
+@parameters t
+
 C6H12O6 = PubChemReactions.search_compound("glucose")
 H2O = PubChemReactions.search_compound("water")
 
