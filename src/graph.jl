@@ -22,5 +22,5 @@ function build_atom_graph(n_vertices, bond_pairs)
     return g
 end
 
-Catalyst.species(rxn::Reaction) = unique(reduce(vcat, (rxn.substrates, rxn.products)))
-Catalyst.species(rxns::Vector{<:Reaction}) = unique(reduce(vcat, map(species, rxns)))
+reaction_species(rxn::Reaction) = unique(reduce(vcat, (rxn.substrates, rxn.products)))
+reaction_species(rxns::Vector{<:Reaction}) = unique(reduce(vcat, map(reaction_species, rxns)))

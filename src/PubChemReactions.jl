@@ -33,7 +33,11 @@ include("pathway.jl")
 include("utils.jl")
 
 export Compound
-export @species_str, @species
+# `@species` is intentionally not exported: it would clash with `Catalyst.@species`
+# when both packages are `using`-imported. Call `PubChemReactions.@species` to use the
+# PubChem-aware version (resolves `cid`/`name`/`save`/`load` metadata); `Catalyst.@species`
+# remains available unqualified via `using Catalyst`.
+export @species_str
 export get_cid, get_name, get_charge, get_graph
 export atom_counts, element_counts, atom_matrix
 export save_species, load_species, isspecies

@@ -2,6 +2,10 @@ using PubChemReactions, Catalyst, Test
 using Graphs, Symbolics
 using Unitful # maybe testdep
 
+# Both PubChemReactions and Catalyst export `@species`; import the PubChem-aware one
+# explicitly so the bare `@species` below resolves the cid/name/save/load metadata version.
+using PubChemReactions: @species
+
 @variables t
 @species CO(t)
 co_cpd = getmetadata(CO, Compound);
@@ -10,12 +14,13 @@ co_cpd = getmetadata(CO, Compound);
 # "CO" didn't resolve right
 @species CO(t) [cid = 281]
 co_cpd = getmetadata(CO, Compound);
-@test co_cpd.name == "Carbon monoxide"
+# PubChem now titles this "Carbon Monoxide" (capitalized M); compare case-insensitively.
+@test lowercase(co_cpd.name) == "carbon monoxide"
 
 # test manually passing in PubChem data
 @variables CO(t)
 CO = PubChemReactions.tospecies(CO; jsons = PubChemReactions.get_json_and_view_from_cid(281))
-@test getmetadata(CO, Compound).name == "Carbon monoxide"
+@test lowercase(getmetadata(CO, Compound).name) == "carbon monoxide"
 
 @species N2_gas(t) [name = "N2"]
 n2 = getmetadata(N2_gas, Compound);

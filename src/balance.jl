@@ -1,7 +1,4 @@
-"""
-also probably bad idea maybe
-"""
-function Base.diff(rxn::Catalyst.Reaction)
+function atom_count_diff(rxn::Catalyst.Reaction)
     return replace_atom_counts_with_elements(mergewith(-, reverse(atom_counts(rxn))...))
 end
 
@@ -16,9 +13,9 @@ end
 check that the element counts in substrates is equal to products
 """
 function isbalanced(rxn)
-    all(hasmetadata.(species(rxn), Compound)) ||
+    all(hasmetadata.(reaction_species(rxn), Compound)) ||
         error("some species do not have atom graph metadata")
-    all(hasmetadata.(species(rxn), AtomBondGraph)) ||
+    all(hasmetadata.(reaction_species(rxn), AtomBondGraph)) ||
         error("some species do not have atom graph metadata")
     return isbalanced(rxn.substrates, rxn.products; substoich = rxn.substoich, prodstoich = rxn.prodstoich)
 end
@@ -170,7 +167,7 @@ function atom_matrix(rxn::Reaction)
     ts = eq_to_term.(eqs)
     # vars = unique(reduce(vcat, Symbolics.get_variables.(ts))) # get_variables permutes, since the order they show in eqs
     # vars = unique(reduce(vcat, x[1:4]))
-    vars = only(@variables x[1:length(species(rxn))])
+    vars = only(@variables x[1:length(reaction_species(rxn))])
     vars = collect(vars)
     a, b, islinear = Symbolics.linear_expansion(ts, vars)
     return a

@@ -2,6 +2,10 @@ using PubChemReactions, Catalyst, Test
 using OrdinaryDiffEq
 using Graphs
 
+# Both PubChemReactions and Catalyst export `@species`; import the PubChem-aware one
+# explicitly so the bare `@species` below resolves the cid/save/load metadata version.
+using PubChemReactions: @species
+
 @variables t
 
 C6H12O6 = PubChemReactions.search_compound("glucose")

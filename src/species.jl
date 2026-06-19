@@ -27,6 +27,10 @@ function set_species_metadata(s, j, jview)
         s, PubChemReactions.CompoundCharge,
         PubChemReactions.CompoundCharge(j.PC_Compounds[1].charge)
     )
+    # Catalyst v15+ validates substrates/products via the `VariableSpecies` metadata;
+    # symbols built here with `@variables` are not marked, so `Reaction(...)` rejects
+    # them unless we flag them as species.
+    s = setmetadata(s, Catalyst.VariableSpecies, true)
     return s
 end
 
@@ -163,10 +167,7 @@ function load_species(cid)
 end
 load_species(cid::Integer) = load_species(string(cid))
 
-"""
-maybe a bad idea overloading open
-"""
-function Base.open(s::Num)
+function open_compound(s::Num)
     isspecies(s) || error("$s not species")
     open_in_default_browser(compound_url(s))
     return nothing
