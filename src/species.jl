@@ -77,7 +77,7 @@ function tospecies(s; jsons = nothing)
     elseif s isa AbstractArray
         map(tospecies, s)
     elseif Symbolics.symtype(s) <: AbstractArray
-        Symbolics.recurse_and_apply(tospecies, s)
+        map(tospecies, Symbolics.scalarize(s))
     else
         if hasmetadata(s, SpeciesName)
             cname = getmetadata(s, PubChemReactions.SpeciesName)

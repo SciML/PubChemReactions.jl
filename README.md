@@ -6,7 +6,7 @@ Generation of reaction networks from PubChem data
 
 Let us suppose that you have two components, **Glucose** and **Water**, and you want to find potential BioChemical reactions & details associated with it.
 
-We'll just need the name of the species we are interested and it will generate a symbolic variable with appropiate metadata:
+We'll just need the name of the species we are interested and it will generate a symbolic variable with appropriate metadata:
 
 ```julia
 using PubChemReactions, Catalyst
