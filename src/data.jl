@@ -11,14 +11,16 @@ function get_cids_from_cname(cname::AbstractString; verbose = false)
     verbose && @info input_url
     res = HTTP.get(input_url)
     if res.status == 200
-        return JSON3.read(String(res.body))
+        return JSON3.read(String(res.body))::JSON3.Object
     else
         error("Cannot Find CID of the species $cname.")
     end
 end
 
 function get_cids(cname::AbstractString)
-    return convert(Vector{Int}, get_cids_from_cname(cname)[:IdentifierList][:CID])
+    identifier_list = get_cids_from_cname(cname)[:IdentifierList]::JSON3.Object
+    cids = identifier_list[:CID]::JSON3.Array
+    return convert(Vector{Int}, cids)
 end
 
 function get_json_from_cname(cname::AbstractString; verbose = false)
@@ -59,13 +61,13 @@ function get_json_and_view(input_url; verbose = false)
     verbose && @info input_url
     res = HTTP.get(input_url)
     if res.status == 200
-        j = JSON3.read(String(res.body))
-        cid = j.PC_Compounds[1].id.id.cid
+        j = JSON3.read(String(res.body))::JSON3.Object
+        cid = (j.PC_Compounds::JSON3.Array)[1].id.id.cid
         input_url2 = "$(PUG_VIEW_URL)/data/compound/$(cid)/JSON"
-        j2 = JSON3.read(String(HTTP.get(input_url2).body))
+        j2 = JSON3.read(String(HTTP.get(input_url2).body))::JSON3.Object
         return j, j2
     else
-        error("Cannot Find CID of the species $cname.")
+        error("Cannot Find record at $input_url.")
     end
 end
 
@@ -170,7 +172,10 @@ function get_chebi_id(csym)
     cid = get_cid(csym)
     input_url = "$PUG_VIEW_URL/data/compound/$cid/JSON/?heading=Biochemical+Reactions"
     res = HTTP.get(input_url)
-    return JSON3.read(String(res.body))[:Record][:Reference][1][:SourceID]
+    j = JSON3.read(String(res.body))::JSON3.Object
+    record = j[:Record]::JSON3.Object
+    reference = record[:Reference]::JSON3.Array
+    return reference[1][:SourceID]
 end
 
 """

@@ -13,8 +13,16 @@ end
 need to fix rate handling, defaulting all to 1 sucks
 """
 function get_pathway(pid)
-    jrxns = pathway_json(pid)
-    return pathway_reaction_to_reaction.(jrxns)
+    # `pathway_json` deserializes to a JSON3.Array of reaction objects; assert it so the
+    # filter/broadcast below operate on `JSON3.Object` entries rather than the wide
+    # `JSON3.read` return union (which would otherwise admit String/Char/Nothing branches).
+    jrxns = pathway_json(pid)::JSON3.Array
+    # `Reaction` rejects entries with neither reactants nor products, so drop them.
+    valid = filter(jrxns) do jr
+        rcids, pcids = pc_pathway_rxn_to_rp_cids(jr)
+        !(isempty(rcids) && isempty(pcids))
+    end
+    return pathway_reaction_to_reaction.(valid)
 end
 
 function species_(s, cid)
@@ -35,7 +43,7 @@ pathway_reaction(rxn_str) = Reaction(1, parse_pathway_reaction(rxn_str)...)
 
 function cid_from_a_tag(str)
     r = parsehtml(str).root
-    a = eachmatch(Selector("a"), r)
+    a = eachmatch(Selector("a")::Cascadia.Selector, r)
     length(a) == 0 && return (str, nothing) # error("$str has no cid")
     a = only(a)
     t = Gumbo.text(a)
@@ -62,7 +70,7 @@ Until PubChem gets back to me about how to query the reactions for a pathway, th
 function get_internal_pathwayid(pid)
     url = joinpath(PC_ROOT, "pathway/$(pid)")
     h = get_html(url).root
-    ms = eachmatch(Selector("meta"), h)
+    ms = eachmatch(Selector("meta")::Cascadia.Selector, h)
     m = only(
         filter(
             x -> haskey(x.attributes, "name") &&
@@ -97,5 +105,11 @@ function pathway_reaction_to_reaction(jr)
     rcids, pcids = pc_pathway_rxn_to_rp_cids(jr)
     rs = species_from_cid.(rcids)
     ps = species_from_cid.(pcids)
+    # Catalyst's `Reaction` rejects untyped (`Vector{Any}`) substrate/product vectors.
+    # Broadcasting over an empty cid list yields `Any[]`, so narrow empty sides to the
+    # concrete species element type taken from whichever side has entries.
+    ET = isempty(rs) ? (isempty(ps) ? Any : eltype(ps)) : eltype(rs)
+    isempty(rs) && (rs = Vector{ET}())
+    isempty(ps) && (ps = Vector{ET}())
     return Reaction(1, rs, ps)
 end

@@ -1,7 +1,4 @@
-"""
-also probably bad idea maybe
-"""
-function Base.diff(rxn::Catalyst.Reaction)
+function atom_count_diff(rxn::Catalyst.Reaction)
     return replace_atom_counts_with_elements(mergewith(-, reverse(atom_counts(rxn))...))
 end
 
@@ -16,9 +13,9 @@ end
 check that the element counts in substrates is equal to products
 """
 function isbalanced(rxn)
-    all(hasmetadata.(species(rxn), Compound)) ||
+    all(hasmetadata.(reaction_species(rxn), Compound)) ||
         error("some species do not have atom graph metadata")
-    all(hasmetadata.(species(rxn), AtomBondGraph)) ||
+    all(hasmetadata.(reaction_species(rxn), AtomBondGraph)) ||
         error("some species do not have atom graph metadata")
     return isbalanced(rxn.substrates, rxn.products; substoich = rxn.substoich, prodstoich = rxn.prodstoich)
 end
@@ -81,12 +78,12 @@ get_elements(s::Vector) = Set(reduce(vcat, get_elements.(s)))
 #     short_circuit && isbalanced(substrates, products) && return Reaction(k, substrates, products)
 
 #     all_species = vcat(substrates, products)
-#     all(PubChemReactions.isspecies.(all_species)) || error("provide chemcial species (with graphs)")
+#     all(PubChemReactions.isspecies.(all_species)) || error("provide chemical species (with graphs)")
 
-#     occuring_elements, atomcounts, chgs, n_specs, n_subs = balance_setup(substrates, products)
+#     occurring_elements, atomcounts, chgs, n_specs, n_subs = balance_setup(substrates, products)
 
 #     @polyvar x[1:n_specs] # couldn't get to work with @variables
-#     eqs = balance_eqs(x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq)
+#     eqs = balance_eqs(x, occurring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq)
 #     ts = eq_to_term.(eqs)
 #     newt = groebner(ts)
 #     sol = only(realsolutions(Symbolics.generic_extension_solve(newt)))
@@ -105,10 +102,10 @@ get_elements(s::Vector) = Set(reduce(vcat, get_elements.(s)))
 # end
 
 function balance_eqs(
-        x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq = false
+        x, occurring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq = false
     )
     eqs = Equation[]
-    for (i, e) in enumerate(occuring_elements)
+    for (i, e) in enumerate(occurring_elements)
         lhs = 0
         rhs = 0
         for (j, d) in enumerate(atomcounts)
@@ -138,26 +135,26 @@ refactor
 function balance_setup(substrates, products)
     all_species = vcat(substrates, products)
     all(PubChemReactions.isspecies.(all_species)) ||
-        error("provide chemcial species (with graphs)")
+        error("provide chemical species (with graphs)")
 
-    occuring_elements = collect(PubChemReactions.get_elements(all_species))
+    occurring_elements = collect(PubChemReactions.get_elements(all_species))
     atomcounts = PubChemReactions.atom_counts.(all_species)
     charges = map(x -> PubChemReactions.get_charge.(x), (substrates, products))
     chgs = reduce(vcat, charges)
 
     n_subs = length(substrates)
-    n_elems = length(occuring_elements)
+    n_elems = length(occurring_elements)
     has_charges = !all(charges .== 0)
     n_specs = length(all_species)
 
-    return occuring_elements, atomcounts, chgs, n_specs, n_subs
+    return occurring_elements, atomcounts, chgs, n_specs, n_subs
 end
 
 function balance_eqs(substrates, products; add_constraint_eq = true)
-    occuring_elements, atomcounts, chgs, n_specs,
+    occurring_elements, atomcounts, chgs, n_specs,
         n_subs = balance_setup(substrates, products)
     @variables x[1:n_specs]
-    return balance_eqs(x, occuring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq)
+    return balance_eqs(x, occurring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq)
 end
 
 function balance_eqs(rxn::Reaction; add_constraint_eq = true)
@@ -170,7 +167,7 @@ function atom_matrix(rxn::Reaction)
     ts = eq_to_term.(eqs)
     # vars = unique(reduce(vcat, Symbolics.get_variables.(ts))) # get_variables permutes, since the order they show in eqs
     # vars = unique(reduce(vcat, x[1:4]))
-    vars = only(@variables x[1:length(species(rxn))])
+    vars = only(@variables x[1:length(reaction_species(rxn))])
     vars = collect(vars)
     a, b, islinear = Symbolics.linear_expansion(ts, vars)
     return a
