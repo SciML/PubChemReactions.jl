@@ -21,25 +21,16 @@ run_qa(
         # those packages mark them public (or declare them with `public`).
         all_qualified_accesses_are_public = (;
             ignore = (
-                :Arr,                      # Symbolics
-                :Array,                    # JSON3
-                :BasicSymbolic,            # SymbolicUtils
-                :DEFAULT_IV,               # Catalyst
-                :Object,                   # JSON3
-                :VariableSpecies,          # Catalyst
-                :_parse_vars,              # Symbolics
-                :escapeuri,                # HTTP
-                :get,                      # HTTP
-                :getname,                  # Symbolics
-                :linear_expansion,         # Symbolics
-                :option_to_metadata_type,  # Symbolics (method extension)
-                :read,                     # JSON3 and CSV
-                :scalarize,                # Symbolics
-                :symtype,                  # Symbolics
-                :unwrap,                   # Symbolics
-                :value,                    # Symbolics
-                :wrap,                     # Symbolics
-                :write,                    # JSON3
+                :Array,            # JSON3
+                :DEFAULT_IV,       # Catalyst
+                :Object,           # JSON3
+                :VariableSpecies,  # Catalyst
+                :escapeuri,        # HTTP
+                :get,              # HTTP
+                :getname,          # Symbolics (re-export of a SymbolicIndexingInterface internal)
+                :read,             # JSON3 and CSV
+                :symtype,          # Symbolics (re-export of a SymbolicUtils internal)
+                :write,            # JSON3
             ),
         ),
     ),
