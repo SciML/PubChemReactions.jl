@@ -17,8 +17,10 @@ run_qa(
                 :unwrap,      # owner SymbolicUtils, accessed via Symbolics
             ),
         ),
-        # Qualified accesses to other packages' currently-non-public names; ignore until
-        # those packages mark them public (or declare them with `public`).
+        # Qualified accesses to non-SciML deps' currently-non-public names; ignore until
+        # those packages mark them public (or declare them with `public`). Verified still
+        # non-public against the released graph (JSON3 1.14, Catalyst 16.2, HTTP 1.11,
+        # Symbolics 7.29, CSV 0.10); none are SciMLBase/DiffEqBase-owned.
         all_qualified_accesses_are_public = (;
             ignore = (
                 :Array,            # JSON3
