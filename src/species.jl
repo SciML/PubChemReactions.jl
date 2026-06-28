@@ -76,13 +76,13 @@ function tospecies(s; jsons = nothing)
         Symbolics.wrap(tospecies(Symbolics.unwrap(s)))
     elseif s isa AbstractArray
         map(tospecies, s)
-    elseif Symbolics.symtype(s) <: AbstractArray
+    elseif SymbolicUtils.symtype(s) <: AbstractArray
         map(tospecies, Symbolics.scalarize(s))
     else
         if hasmetadata(s, SpeciesName)
             cname = getmetadata(s, PubChemReactions.SpeciesName)
         else
-            cname = string(Symbolics.getname(s))
+            cname = string(SymbolicIndexingInterface.getname(s))
         end
         if jsons === nothing
             if hasmetadata(s, SpeciesCid)

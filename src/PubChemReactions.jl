@@ -1,6 +1,7 @@
 module PubChemReactions
 
 using JSON3, HTTP, Symbolics, CSV, DataFrames
+import SymbolicUtils, SymbolicIndexingInterface
 using Catalyst, Graphs
 using StatsBase
 using ImageIO, FileIO, Plots
