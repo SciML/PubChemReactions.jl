@@ -43,6 +43,11 @@ macro species_str(cname)
     return s
 end
 
+"""
+    isspecies(s)
+
+Return `true` when `s` has PubChem atom-bond graph metadata.
+"""
 function isspecies(s)
     return hasmetadata(s, AtomBondGraph)
 end
@@ -139,6 +144,14 @@ function species_from_cid_and_name(name, cid; save = true, load = true)
     return only(@species $name(Catalyst.DEFAULT_IV) [save = save, cid = cid, load = load])
 end
 
+"""
+    save_species(s; path = COMPOUNDS_DIR)
+
+Write the PubChem PUG and PUG-View JSON payloads attached to species `s`.
+
+The payloads are stored under a compound-id subdirectory of `path`, and the
+saved directory path is returned.
+"""
 function save_species(s; path = COMPOUNDS_DIR)
     # isspecies(s) || error("$s is not a PubChemReactions species")
     cid = string(PubChemReactions.get_cid(s))
@@ -160,6 +173,11 @@ function save_species(s; path = COMPOUNDS_DIR)
     return p
 end
 
+"""
+    load_species(cid)
+
+Load a saved PubChem species by compound identifier `cid`.
+"""
 function load_species(cid)
     _, jview = load_json_and_view_from_cid(cid)
     name = Symbol(jview.Record.RecordTitle)

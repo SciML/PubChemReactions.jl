@@ -1,3 +1,8 @@
+"""
+    make_at_species(sps; current_name = true)
+
+Return a Catalyst `@species` expression string for PubChem species `sps`.
+"""
 function make_at_species(sps; current_name = true)
     name = current_name ? nameof(operation(Symbolics.value(sps))) :
         """var"$(get_name(sps))\""""
@@ -10,6 +15,11 @@ function eq_str_to_wl(str)
     return str = replace(str, "|" => "||")
 end
 
+"""
+    eqs_to_mathematica(eqs)
+
+Convert symbolic equations to a Wolfram Language list string.
+"""
 function eqs_to_mathematica(eqs)
     es = string.(eqs)
     eq_strs = map(eq_str_to_wl, es)

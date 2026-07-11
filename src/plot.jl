@@ -57,6 +57,11 @@ function atomplot3d(s)
     return open_in_default_browser(url)
 end
 
+"""
+    atomplot2d(s)
+
+Open the PubChem 2D structure viewer for species `s`.
+"""
 function atomplot2d(s)
     cid = string(get_cid(s))
     url = joinpath(PC_ROOT, "compound", "$cid#section=2D-Structure&fullscreen=true")
