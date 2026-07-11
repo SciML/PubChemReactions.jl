@@ -95,7 +95,18 @@ function compound_json_to_simplegraph(j)
     return g, atom_pairs
 end
 
+"""
+    get_graph(s)
+
+Return the atom-bond graph metadata attached to PubChem species `s`.
+"""
 get_graph(s) = isspecies(s) ? getmetadata(s, AtomBondGraph) : error("no graph for var $s")
+
+"""
+    get_charge(s)
+
+Return the formal charge stored in the PubChem species metadata for `s`.
+"""
 function get_charge(s)
     return isspecies(s) ? getmetadata(s, CompoundCharge).charge : error("no charge for var $s")
 end
@@ -106,6 +117,11 @@ function get_reaction(eq)
     # balance(x[1], x[2])
 end
 
+"""
+    get_cid(s)
+
+Return the PubChem compound identifier attached to species `s`.
+"""
 function get_cid(s)
     return getmetadata(s, Compound).cid
 end
@@ -118,6 +134,11 @@ function get_jview(s)
     return getmetadata(s, Compound).json_view.Record
 end
 
+"""
+    get_name(s)
+
+Return the PubChem compound name attached to species `s`.
+"""
 function get_name(s)
     return getmetadata(s, Compound).name
 end
@@ -196,4 +217,9 @@ function rxn_masses(rxn)
     return subs, prods
 end
 
+"""
+    pubchem_search(s)
+
+Open a PubChem search for query `s` in the system default browser.
+"""
 pubchem_search(s) = open_in_default_browser(joinpath(PC_ROOT, "#query=$s"))

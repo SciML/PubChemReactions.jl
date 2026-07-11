@@ -6,11 +6,14 @@ run_qa(
     explicit_imports = true,
     jet_kwargs = (; target_defined_modules = true),
     ei_kwargs = (;
-        # `escapeuri` is owned by URIs (an external dep) but accessed via HTTP, which
-        # re-exports it non-publicly; HTTP is the natural import here, so keep the ignore.
+        # `escapeuri` is owned by URIs but accessed via HTTP. `scalarize` and
+        # `unwrap` are public Symbolics entry points whose methods are owned by
+        # SymbolicUtils, so Base.which reports the implementation owner.
         all_qualified_accesses_via_owners = (;
             ignore = (
-                :escapeuri,   # owner URIs, accessed via HTTP
+                :escapeuri, # owner URIs, accessed via HTTP
+                :scalarize, # owner SymbolicUtils, accessed via Symbolics
+                :unwrap,    # owner SymbolicUtils, accessed via Symbolics
             ),
         ),
         # Qualified accesses to non-SciML deps' currently-non-public names; ignore until

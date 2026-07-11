@@ -48,6 +48,11 @@ export atomplot, atomplot2d, atomplot3d
 export make_at_species, eqs_to_mathematica
 export pathway_reaction
 
+"""
+    pc()
+
+Open the PubChem homepage in the system default browser.
+"""
 pc() = open_in_default_browser(PC_ROOT)
 export pc
 

@@ -1,3 +1,11 @@
+"""
+    Compound
+
+Metadata container for a PubChem compound record attached to a symbolic species.
+
+Stores the compound name, PubChem compound identifier, PUG record JSON, and
+PUG-View JSON for later property queries and graph construction.
+"""
 struct Compound
     name::String
     cid::Int

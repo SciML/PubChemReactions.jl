@@ -39,6 +39,11 @@ function parse_pathway_reaction(rxn_str)
     return ss, ps
 end
 
+"""
+    pathway_reaction(rxn_str)
+
+Parse a PubChem pathway reaction string into a Catalyst `Reaction` with unit rate.
+"""
 pathway_reaction(rxn_str) = Reaction(1, parse_pathway_reaction(rxn_str)...)
 
 function cid_from_a_tag(str)

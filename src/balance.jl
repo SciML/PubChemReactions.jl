@@ -33,9 +33,21 @@ end
 function replace_atom_counts_with_elements(atomcounts::Dict)
     return Dict(PeriodicTable.elements[collect(keys(atomcounts))] .=> values(atomcounts))
 end
+
+"""
+    element_counts(x)
+
+Return atom counts for `x` keyed by `PeriodicTable.Element` values.
+"""
 element_counts(x) = replace_atom_counts_with_elements(atom_counts(x))
 element_counts(x::Reaction) = replace_atom_counts_with_elements.(atom_counts(x))
 
+"""
+    atom_counts(x)
+
+Return atom counts for a PubChem species, reaction, or stoichiometric species
+collection.
+"""
 function atom_counts(s::Num)
     c = getmetadata(s, AtomBondGraph)
     aps = c.atoms
@@ -101,6 +113,12 @@ get_elements(s::Vector) = Set(reduce(vcat, get_elements.(s)))
 #     rxn
 # end
 
+"""
+    balance_eqs(substrates, products; add_constraint_eq = true)
+    balance_eqs(rxn::Reaction; add_constraint_eq = true)
+
+Construct symbolic element and charge balance equations for a reaction.
+"""
 function balance_eqs(
         x, occurring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq = false
     )
@@ -162,6 +180,11 @@ function balance_eqs(rxn::Reaction; add_constraint_eq = true)
 end
 eq_to_term(eq) = eq.lhs - eq.rhs
 
+"""
+    atom_matrix(rxn::Reaction)
+
+Return the linear coefficient matrix for the balance equations of `rxn`.
+"""
 function atom_matrix(rxn::Reaction)
     eqs = balance_eqs(rxn)
     ts = eq_to_term.(eqs)
