@@ -10,7 +10,10 @@ function isbalanced(
 end
 
 """
-check that the element counts in substrates is equal to products
+    isbalanced(rxn)
+
+Return `true` when the substrates and products in reaction `rxn` have matching
+element counts.
 """
 function isbalanced(rxn)
     all(hasmetadata.(reaction_species(rxn), Compound)) ||
@@ -21,7 +24,10 @@ function isbalanced(rxn)
 end
 
 """
-check that the element counts in sub
+    isbalanced(rn::ReactionSystem)
+
+Return `true` when every reaction in the Catalyst reaction system `rn` is
+element-balanced.
 """
 function isbalanced(rn::ReactionSystem)
     return all(isbalanced.(reactions(rn)))

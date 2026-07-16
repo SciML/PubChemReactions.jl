@@ -1,0 +1,26 @@
+# PubChemReactions.jl
+
+```@docs
+PubChemReactions.Compound
+PubChemReactions.@species_str
+PubChemReactions.get_cid
+PubChemReactions.get_name
+PubChemReactions.get_charge
+PubChemReactions.get_graph
+PubChemReactions.atom_counts
+PubChemReactions.element_counts
+PubChemReactions.atom_matrix
+PubChemReactions.save_species
+PubChemReactions.load_species
+PubChemReactions.isspecies
+PubChemReactions.pubchem_search
+PubChemReactions.balance_eqs
+PubChemReactions.isbalanced
+PubChemReactions.atomplot
+PubChemReactions.atomplot2d
+PubChemReactions.atomplot3d
+PubChemReactions.make_at_species
+PubChemReactions.eqs_to_mathematica
+PubChemReactions.pathway_reaction
+PubChemReactions.pc
+```

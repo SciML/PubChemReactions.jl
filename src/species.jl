@@ -35,7 +35,10 @@ function set_species_metadata(s, j, jview)
 end
 
 """
-generate a chemical species and plot it
+    @species_str(cname)
+
+Look up the PubChem compound named by the string literal `cname`, attach the
+compound metadata to a symbolic species, and display its atom plot.
 """
 macro species_str(cname)
     s = search_compound(cname)
