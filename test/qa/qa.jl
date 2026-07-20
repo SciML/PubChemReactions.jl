@@ -3,7 +3,6 @@ using JET
 
 run_qa(
     PubChemReactions;
-    explicit_imports = true,
     jet_kwargs = (; target_defined_modules = true),
     ei_kwargs = (;
         # `escapeuri` is owned by URIs but accessed via HTTP. `scalarize` and

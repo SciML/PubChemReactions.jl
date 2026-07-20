@@ -7,7 +7,10 @@ function download_atomplot(s)
 end
 
 """
-uses the 2D image provided by PubChem, rather than trying to use the graph data
+    atomplot(s; verbose = false)
+
+Download PubChem's 2D structure image for species `s` and display it with the
+compound identifier, molecular formula, and name in the plot title.
 """
 function atomplot(s; verbose = false)
     cid, io = download_atomplot(s)
@@ -47,9 +50,9 @@ function open_in_default_browser(url::AbstractString)::Bool
 end
 
 """
-not all compounds have a 3d plot so it could open a 404'd page
+    atomplot3d(s)
 
-example https://pubchem.ncbi.nlm.nih.gov/compound/5793#section=3D-Conformer&fullscreen=true
+Open the PubChem 3D conformer viewer for species `s`.
 """
 function atomplot3d(s)
     cid = string(get_cid(s))
