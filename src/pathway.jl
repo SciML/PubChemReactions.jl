@@ -6,18 +6,34 @@ function pathway_json(pid)
             "?infmt=json&outfmt=json&query={%22download%22:%22*%22,%22collection%22:%22pathwayreaction%22,%22where%22:{%22ands%22:[{%22pathwayid%22:%22$(internal_pid)%22}]},%22order%22:[%22relevancescore,desc%22],%22start%22:1,%22limit%22:10000000,%22downloadfilename%22:%22$(internal_pid)_pathwayreaction%22}",
         ]
     )
-    return JSON3.read(get_page(url))
+    return parse_json(get_page(url))
 end
 
 """
-need to fix rate handling, defaulting all to 1 sucks
+    get_pathway(pid::AbstractString) -> Vector{Catalyst.Reaction}
+
+Retrieve the PubChem pathway identified by `pid` and convert its nonempty reaction records
+to unit-rate Catalyst reactions.
+
+# Arguments
+- `pid::AbstractString`: PubChem or external pathway identifier accepted by the PubChem
+  pathway endpoint.
+
+# Returns
+- `Vector{Catalyst.Reaction}`: reactions whose species carry PubChem metadata.
+
+# Throws
+- `ErrorException`: if PubChem cannot retrieve the pathway or its referenced compounds.
+
+# Examples
+```julia
+reactions = PubChemReactions.get_pathway("Reactome:R-HSA-70171")
+```
 """
 function get_pathway(pid)
-    # `pathway_json` deserializes to a JSON3.Array of reaction objects; assert it so the
-    # filter/broadcast below operate on `JSON3.Object` entries rather than the wide
-    # `JSON3.read` return union (which would otherwise admit String/Char/Nothing branches).
-    jrxns = pathway_json(pid)::JSON3.Array
-    # `Reaction` rejects entries with neither reactants nor products, so drop them.
+    # The PubChem endpoint returns reaction objects. Drop entries without either side before
+    # creating Catalyst reactions, which reject an entirely empty reaction.
+    jrxns = pathway_json(pid)
     valid = filter(jrxns) do jr
         rcids, pcids = pc_pathway_rxn_to_rp_cids(jr)
         !(isempty(rcids) && isempty(pcids))
@@ -40,15 +56,30 @@ function parse_pathway_reaction(rxn_str)
 end
 
 """
-    pathway_reaction(rxn_str)
+    pathway_reaction(rxn_str) -> Catalyst.Reaction
 
 Parse a PubChem pathway reaction string into a Catalyst `Reaction` with unit rate.
+
+# Arguments
+- `rxn_str::AbstractString`: pathway reaction expression using a supported Rhea arrow
+  and optional PubChem compound-id links.
+
+# Returns
+- `Catalyst.Reaction`: unit-rate reaction built from resolved PubChem species.
+
+# Throws
+- `ErrorException`: if PubChem records cannot be retrieved for a reaction species.
+
+# Examples
+```julia
+pathway_reaction("water = water")
+```
 """
 pathway_reaction(rxn_str) = Reaction(1, parse_pathway_reaction(rxn_str)...)
 
 function cid_from_a_tag(str)
     r = parsehtml(str).root
-    a = eachmatch(Selector("a")::Cascadia.Selector, r)
+    a = eachmatch(Selector("a")::Selector, r)
     length(a) == 0 && return (str, nothing) # error("$str has no cid")
     a = only(a)
     t = Gumbo.text(a)
@@ -69,13 +100,11 @@ function get_html(url)
     return parsehtml(p)
 end
 
-"""
-Until PubChem gets back to me about how to query the reactions for a pathway, this is the only way it seems.
-"""
+# PubChem's pathway table endpoint requires the site's internal pathway identifier.
 function get_internal_pathwayid(pid)
     url = joinpath(PC_ROOT, "pathway/$(pid)")
     h = get_html(url).root
-    ms = eachmatch(Selector("meta")::Cascadia.Selector, h)
+    ms = eachmatch(Selector("meta")::Selector, h)
     m = only(
         filter(
             x -> haskey(x.attributes, "name") &&
@@ -93,9 +122,6 @@ end
 
 to_arr(xs) = isa(xs, AbstractArray) ? xs : [xs]
 
-"""
-check that the reaction str `jr.reaction`, when parsed, has the same length as the rcids and pcids from the json
-"""
 function is_reacts_prods_cids_aligned(jr)
     rxn_str = jr.reaction
     rp = pc_pathway_rxn_to_rp_cids(jr)
@@ -103,9 +129,6 @@ function is_reacts_prods_cids_aligned(jr)
     return length.(rp) == length.(sp)
 end
 
-"""
-todo: fix that all reactions are unidirectional
-"""
 function pathway_reaction_to_reaction(jr)
     rcids, pcids = pc_pathway_rxn_to_rp_cids(jr)
     rs = species_from_cid.(rcids)

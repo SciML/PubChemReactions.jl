@@ -1,16 +1,19 @@
 module PubChemReactions
 
-using JSON3, HTTP, Symbolics, CSV, DataFrames
-import SymbolicUtils, SymbolicIndexingInterface
-using Catalyst, Graphs
-using StatsBase
-using ImageIO, FileIO, Plots
-using Downloads
-# using URIs maybe
-using PeriodicTable
-using Cascadia, Gumbo # grumble grumble
-# using Groebner, DynamicPolynomials
-# using PolynomialRoots, PolynomialFactors
+import Cascadia, Downloads, Gumbo, ImageIO, JSON, PeriodicTable, SymbolicIndexingInterface,
+    SymbolicUtils, URIs
+import Catalyst, Symbolics
+using Catalyst: Reaction, ReactionSystem, reactions
+using Cascadia: Selector
+using DataFrames: DataFrame
+using DelimitedFiles: readdlm
+using FileIO: load
+using Graphs: SimpleGraph, add_edge!
+using Gumbo: parsehtml
+import Plots
+using StatsBase: countmap
+using SymbolicUtils: getmetadata, hasmetadata, setmetadata
+using Symbolics: Equation, Num, @variables
 
 const PC_ROOT = "https://pubchem.ncbi.nlm.nih.gov"
 const PUG_URL = joinpath(PC_ROOT, "rest/pug")
@@ -34,10 +37,8 @@ include("pathway.jl")
 include("utils.jl")
 
 export Compound
-# `@species` is intentionally not exported: it would clash with `Catalyst.@species`
-# when both packages are `using`-imported. Call `PubChemReactions.@species` to use the
-# PubChem-aware version (resolves `cid`/`name`/`save`/`load` metadata); `Catalyst.@species`
-# remains available unqualified via `using Catalyst`.
+# `@species` is intentionally not exported because it clashes with `Catalyst.@species`.
+# Use `PubChemReactions.@species` or import it explicitly.
 export @species_str
 export get_cid, get_name, get_charge, get_graph
 export atom_counts, element_counts, atom_matrix
@@ -49,9 +50,17 @@ export make_at_species, eqs_to_mathematica
 export pathway_reaction
 
 """
-    pc()
+    pc() -> Bool
 
 Open the PubChem homepage in the system default browser.
+
+# Returns
+- `Bool`: whether the browser command was started successfully.
+
+# Examples
+```julia
+pc()
+```
 """
 pc() = open_in_default_browser(PC_ROOT)
 export pc

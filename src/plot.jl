@@ -11,6 +11,26 @@ end
 
 Download PubChem's 2D structure image for species `s` and display it with the
 compound identifier, molecular formula, and name in the plot title.
+
+# Arguments
+- `s`: PubChem species with compound metadata.
+
+# Keywords
+- `verbose::Bool = false`: log the compound identifier, name, and formula before
+  displaying the plot.
+
+# Returns
+- The result of displaying a `Plots.Plot` containing PubChem's 2D structure image.
+
+# Throws
+- `KeyError`: if `s` has no [`Compound`](@ref) metadata.
+- `ErrorException`: if PubChem does not return the image.
+
+# Examples
+```julia
+water = PubChemReactions.search_compound("water")
+atomplot(water)
+```
 """
 function atomplot(s; verbose = false)
     cid, io = download_atomplot(s)
@@ -19,7 +39,7 @@ function atomplot(s; verbose = false)
     title = "$cid: $mf | $sname"
     verbose && @info(cid = cid, name = sname, formula = mf)
     p = Plots.plot(load(io))
-    title!(p, title)
+    Plots.title!(p, title)
     return display(p)
 end
 
@@ -50,9 +70,22 @@ function open_in_default_browser(url::AbstractString)::Bool
 end
 
 """
-    atomplot3d(s)
+    atomplot3d(s) -> Bool
 
 Open the PubChem 3D conformer viewer for species `s`.
+
+# Arguments
+- `s`: PubChem species with compound metadata.
+
+# Returns
+- `Bool`: whether the browser command was started successfully. PubChem may not
+  provide a 3D conformer for every compound.
+
+# Examples
+```julia
+water = PubChemReactions.search_compound("water")
+atomplot3d(water)
+```
 """
 function atomplot3d(s)
     cid = string(get_cid(s))
@@ -61,9 +94,21 @@ function atomplot3d(s)
 end
 
 """
-    atomplot2d(s)
+    atomplot2d(s) -> Bool
 
 Open the PubChem 2D structure viewer for species `s`.
+
+# Arguments
+- `s`: PubChem species with compound metadata.
+
+# Returns
+- `Bool`: whether the browser command was started successfully.
+
+# Examples
+```julia
+water = PubChemReactions.search_compound("water")
+atomplot2d(water)
+```
 """
 function atomplot2d(s)
     cid = string(get_cid(s))

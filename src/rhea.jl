@@ -1,3 +1,24 @@
+"""
+    parse_rhea_equation(eq::AbstractString)
+
+Parse a Rhea equation into PubChem species and their stoichiometric coefficients.
+
+# Arguments
+- `eq::AbstractString`: Rhea equation containing one of the supported reaction arrows.
+
+# Returns
+- `Tuple`: reactant species, product species, reactant coefficients, and product
+  coefficients, in that order.
+
+# Throws
+- `ErrorException`: if a named compound cannot be retrieved from PubChem.
+
+# Examples
+```julia
+reactants, products, rstoich, pstoich =
+    PubChemReactions.parse_rhea_equation("water = water")
+```
+"""
 function parse_rhea_equation(eq::AbstractString)
     reactants, products = PubChemReactions.rhea_to_reacts_prods(eq)
     rs = map(PubChemReactions.make_stoich_from_rhea, reactants)
@@ -8,9 +29,6 @@ function parse_rhea_equation(eq::AbstractString)
     return search_compound.(reactants), search_compound.(products), rstoich, pstoich
 end
 
-"""
-includes stoich values
-"""
 function rhea_to_reacts_prods(eq::AbstractString)
     eq = foldl(replace, ARROWS .=> "=", init = eq)
     lhs, rhs = split(eq, " = ")
@@ -27,7 +45,25 @@ function make_stoich_from_rhea(s)
 end
 
 """
-searches the Rhea reactions DB for reactions that include the species in args
+    get_biochem_rxns(csym, csyms...) -> DataFrame
+
+Search Rhea for biochemical reactions that include all supplied PubChem species.
+
+# Arguments
+- `csym`: PubChem species used to start the Rhea query.
+- `csyms...`: additional PubChem species required in the matching reactions.
+
+# Returns
+- `DataFrame`: matching Rhea identifiers, equations, and ChEBI identifiers.
+
+# Throws
+- `ErrorException`: if a species has no usable ChEBI reference or Rhea cannot be reached.
+
+# Examples
+```julia
+water = PubChemReactions.search_compound("water")
+reactions = PubChemReactions.get_biochem_rxns(water)
+```
 """
 function get_biochem_rxns(csym, csyms...)
     chebi_ids = get_chebi_id(csym)
@@ -37,10 +73,6 @@ function get_biochem_rxns(csym, csyms...)
     end
 
     input_url = "$RHEA_URL/?query=$(chebi_ids)&columns=rhea-id,equation,chebi-id&format=tsv"
-    res = HTTP.get(input_url)
-    if res.status == 200
-        return CSV.read(IOBuffer(res.body), DataFrame)
-    else
-        error("Cannot find Biochemical reactions")
-    end
+    data, header = readdlm(IOBuffer(get_page(input_url)), '\t', header = true)
+    return DataFrame(data, vec(Symbol.(header)))
 end

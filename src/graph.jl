@@ -1,16 +1,33 @@
 """
-    Compound
+    Compound(name, cid, json, json_view)
 
 Metadata container for a PubChem compound record attached to a symbolic species.
 
-Stores the compound name, PubChem compound identifier, PUG record JSON, and
-PUG-View JSON for later property queries and graph construction.
+`Compound` is attached internally while constructing a PubChem species. Use
+accessors such as [`get_cid`](@ref), [`get_name`](@ref), and [`get_graph`](@ref)
+instead of depending on its storage representation.
+
+# Fields
+- `name::String`: PubChem record title.
+- `cid::Int`: PubChem compound identifier.
+- `json::AbstractDict{Symbol, Any}`: PUG compound record used to build structural metadata.
+- `json_view::AbstractDict{Symbol, Any}`: PUG-View record used to retrieve displayed
+  properties.
+
+# Examples
+```julia
+using SymbolicUtils: getmetadata
+
+species = PubChemReactions.search_compound("water")
+compound = getmetadata(species, PubChemReactions.Compound)
+compound.cid
+```
 """
 struct Compound
     name::String
     cid::Int
-    json::JSON3.Object
-    json_view::JSON3.Object
+    json::AbstractDict{Symbol, Any}
+    json_view::AbstractDict{Symbol, Any}
 end
 
 struct AtomBondGraph

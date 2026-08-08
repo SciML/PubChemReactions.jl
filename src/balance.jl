@@ -2,6 +2,41 @@ function atom_count_diff(rxn::Catalyst.Reaction)
     return replace_atom_counts_with_elements(mergewith(-, reverse(atom_counts(rxn))...))
 end
 
+"""
+    isbalanced(
+            substrates, products; substoich = ones(length(substrates)),
+            prodstoich = ones(length(products))
+        ) -> Bool
+    isbalanced(rxn::Catalyst.Reaction) -> Bool
+    isbalanced(rn::Catalyst.ReactionSystem) -> Bool
+
+Return whether PubChem species have equal element counts on both sides of a
+reaction.
+
+# Arguments
+- `substrates`: iterable of PubChem species on the reactant side.
+- `products`: iterable of PubChem species on the product side.
+- `rxn::Catalyst.Reaction`: reaction to check.
+- `rn::Catalyst.ReactionSystem`: every reaction in this system is checked.
+
+# Keywords
+- `substoich = ones(length(substrates))`: stoichiometric coefficients for
+  `substrates`.
+- `prodstoich = ones(length(products))`: stoichiometric coefficients for
+  `products`.
+
+# Returns
+- `Bool`: `true` only when both sides have identical element-count mappings.
+
+# Throws
+- `ErrorException`: if reaction species do not carry PubChem structural metadata.
+
+# Examples
+```julia
+water = PubChemReactions.search_compound("water")
+isbalanced([water], [water])
+```
+"""
 function isbalanced(
         substrates, products; substoich = ones(length(substrates)),
         prodstoich = ones(length(products))
@@ -9,12 +44,6 @@ function isbalanced(
     return atom_counts(substrates, substoich) == atom_counts(products, prodstoich)
 end
 
-"""
-    isbalanced(rxn)
-
-Return `true` when the substrates and products in reaction `rxn` have matching
-element counts.
-"""
 function isbalanced(rxn)
     all(hasmetadata.(reaction_species(rxn), Compound)) ||
         error("some species do not have atom graph metadata")
@@ -23,12 +52,6 @@ function isbalanced(rxn)
     return isbalanced(rxn.substrates, rxn.products; substoich = rxn.substoich, prodstoich = rxn.prodstoich)
 end
 
-"""
-    isbalanced(rn::ReactionSystem)
-
-Return `true` when every reaction in the Catalyst reaction system `rn` is
-element-balanced.
-"""
 function isbalanced(rn::ReactionSystem)
     return all(isbalanced.(reactions(rn)))
 end
@@ -44,6 +67,19 @@ end
     element_counts(x)
 
 Return atom counts for `x` keyed by `PeriodicTable.Element` values.
+
+# Arguments
+- `x`: PubChem species, reaction, or supported collection of PubChem species.
+
+# Returns
+- A mapping from `PeriodicTable.Element` values to atom counts, or a pair of
+  mappings for a reaction.
+
+# Examples
+```julia
+water = PubChemReactions.search_compound("water")
+element_counts(water)
+```
 """
 element_counts(x) = replace_atom_counts_with_elements(atom_counts(x))
 element_counts(x::Reaction) = replace_atom_counts_with_elements.(atom_counts(x))
@@ -53,6 +89,22 @@ element_counts(x::Reaction) = replace_atom_counts_with_elements.(atom_counts(x))
 
 Return atom counts for a PubChem species, reaction, or stoichiometric species
 collection.
+
+# Arguments
+- `x`: PubChem species, `Catalyst.Reaction`, or a vector of PubChem species.
+
+# Returns
+- `Dict`: element-number-to-count mapping for a species or collection.
+- `Tuple{Dict, Dict}`: substrate and product mappings for a reaction.
+
+# Throws
+- `KeyError`: if a species has no atom-bond graph metadata.
+
+# Examples
+```julia
+water = PubChemReactions.search_compound("water")
+atom_counts(water)
+```
 """
 function atom_counts(s::Num)
     c = getmetadata(s, AtomBondGraph)
@@ -119,13 +171,7 @@ get_elements(s::Vector) = Set(reduce(vcat, get_elements.(s)))
 #     rxn
 # end
 
-"""
-    balance_eqs(substrates, products; add_constraint_eq = true)
-    balance_eqs(rxn::Reaction; add_constraint_eq = true)
-
-Construct symbolic element and charge balance equations for a reaction.
-"""
-function balance_eqs(
+function _balance_eqs(
         x, occurring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq = false
     )
     eqs = Equation[]
@@ -153,9 +199,6 @@ function balance_eqs(
     return eqs
 end
 
-"""
-refactor
-"""
 function balance_setup(substrates, products)
     all_species = vcat(substrates, products)
     all(PubChemReactions.isspecies.(all_species)) ||
@@ -174,11 +217,38 @@ function balance_setup(substrates, products)
     return occurring_elements, atomcounts, chgs, n_specs, n_subs
 end
 
+"""
+    balance_eqs(substrates, products; add_constraint_eq = true)
+    balance_eqs(rxn::Catalyst.Reaction; add_constraint_eq = true)
+
+Construct symbolic element and charge balance equations for PubChem species.
+
+# Arguments
+- `substrates`: iterable of PubChem species on the left side of a reaction.
+- `products`: iterable of PubChem species on the right side of a reaction.
+- `rxn::Catalyst.Reaction`: reaction from which substrates and products are read.
+
+# Keywords
+- `add_constraint_eq::Bool = true`: append an equation that fixes the final stoichiometric
+  variable to one and removes the scale indeterminacy.
+
+# Returns
+- `Vector{Symbolics.Equation}`: homogeneous element and charge balance equations.
+
+# Throws
+- `ErrorException`: if any species has no PubChem structural metadata.
+
+# Examples
+```julia
+water = PubChemReactions.search_compound("water")
+balance_eqs([water], [water])
+```
+"""
 function balance_eqs(substrates, products; add_constraint_eq = true)
     occurring_elements, atomcounts, chgs, n_specs,
         n_subs = balance_setup(substrates, products)
     @variables x[1:n_specs]
-    return balance_eqs(x, occurring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq)
+    return _balance_eqs(x, occurring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq)
 end
 
 function balance_eqs(rxn::Reaction; add_constraint_eq = true)
@@ -187,16 +257,36 @@ end
 eq_to_term(eq) = eq.lhs - eq.rhs
 
 """
-    atom_matrix(rxn::Reaction)
+    atom_matrix(rxn::Reaction) -> AbstractMatrix
 
 Return the linear coefficient matrix for the balance equations of `rxn`.
+
+# Arguments
+- `rxn::Catalyst.Reaction`: reaction with PubChem species metadata.
+
+# Returns
+- `AbstractMatrix`: coefficient matrix for the equations produced by
+  [`balance_eqs`](@ref).
+
+# Throws
+- `ErrorException`: if any species in `rxn` has no PubChem structural metadata.
+
+# Examples
+```julia
+using Catalyst: Reaction
+
+water = PubChemReactions.search_compound("water")
+rxn = Reaction(1, [water], [water])
+atom_matrix(rxn)
+```
 """
 function atom_matrix(rxn::Reaction)
     eqs = balance_eqs(rxn)
     ts = eq_to_term.(eqs)
     # vars = unique(reduce(vcat, Symbolics.get_variables.(ts))) # get_variables permutes, since the order they show in eqs
     # vars = unique(reduce(vcat, x[1:4]))
-    vars = only(@variables x[1:length(reaction_species(rxn))])
+    n_species = length(rxn.substrates) + length(rxn.products)
+    vars = only(@variables x[1:n_species])
     vars = collect(vars)
     a, b, islinear = Symbolics.linear_expansion(ts, vars)
     return a

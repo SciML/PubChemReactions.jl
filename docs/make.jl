@@ -5,8 +5,10 @@ makedocs(;
     modules = [PubChemReactions],
     sitename = "PubChemReactions.jl",
     pages = [
+        "Usage" => "usage.md",
         "Public API" => "index.md",
     ],
+    doctest = true,
     checkdocs = :exports,
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
