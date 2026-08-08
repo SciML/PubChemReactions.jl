@@ -90,23 +90,9 @@ function cid_from_a_tag(str)
 end
 
 function get_page(url)
-    return _get_page(url, _request_page, (1, 2, 4, 8))
-end
-
-_request_page(url, io) = Downloads.request(url; output = io)
-
-function _get_page(url, request, retry_delays)
-    for delay in (retry_delays..., nothing)
-        io = IOBuffer()
-        response = request(url, io)
-        200 <= response.status < 300 && return String(take!(io))
-
-        retryable = response.status == 408 || response.status == 429 ||
-            500 <= response.status < 600
-        retryable && delay !== nothing || error("HTTP $(response.status) while requesting $url")
-        sleep(delay)
-    end
-    return
+    io = IOBuffer()
+    Downloads.download(url, io)
+    return String(take!(io))
 end
 
 function get_html(url)

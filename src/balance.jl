@@ -285,8 +285,7 @@ function atom_matrix(rxn::Reaction)
     ts = eq_to_term.(eqs)
     # vars = unique(reduce(vcat, Symbolics.get_variables.(ts))) # get_variables permutes, since the order they show in eqs
     # vars = unique(reduce(vcat, x[1:4]))
-    n_species = length(rxn.substrates) + length(rxn.products)
-    vars = only(@variables x[1:n_species])
+    vars = only(@variables x[1:length(reaction_species(rxn))])
     vars = collect(vars)
     a, b, islinear = Symbolics.linear_expansion(ts, vars)
     return a

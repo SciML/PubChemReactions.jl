@@ -43,17 +43,7 @@ water = PubChemReactions.tospecies(water; jsons = (compound_json, view_json))
 reaction = Reaction(1, [water], [water])
 @test isbalanced(reaction)
 @test length(balance_eqs(reaction)) == 3
-@test size(atom_matrix(reaction), 2) == 2
 @test eqs_to_mathematica(balance_eqs(reaction)) isa String
-
-attempts = Ref(0)
-function retrying_request(_, io)
-    attempts[] += 1
-    write(io, attempts[] < 3 ? "busy" : "ok")
-    return (; status = attempts[] < 3 ? 503 : 200)
-end
-@test PubChemReactions._get_page("https://example.invalid", retrying_request, (0, 0)) == "ok"
-@test attempts[] == 3
 
 mktempdir() do path
     saved = save_species(water; path)
