@@ -9,7 +9,8 @@ Symbolics.option_to_metadata_type(::Val{:save}) = SpeciesSave
 Symbolics.option_to_metadata_type(::Val{:load}) = SpeciesLoad
 
 function catalyst_species(name::Symbol)
-    return only(Catalyst.@species $name(Catalyst.default_t()))
+    t = Catalyst.default_t()
+    return only(Catalyst.@species $name($t))
 end
 
 function set_species_metadata(s, j, jview)

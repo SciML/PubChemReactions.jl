@@ -1,5 +1,6 @@
 using PubChemReactions, Catalyst, OrdinaryDiffEq, Test
 using InvertedIndices
+using Symbolics: @variables
 using Unitful, Plots
 
 # below was attempting to do this all manually
@@ -30,7 +31,8 @@ wiki_rxn_idxs = [4, 6, 12, 13, 14, 15, 18, 19, 20, 21]
 @test all(aligned[wiki_rxn_idxs])
 
 wiki_rxns = PubChemReactions.pathway_reaction_to_reaction.(jrxns[wiki_rxn_idxs])
-@named rs = ReactionSystem(wiki_rxns, Catalyst.default_t())
+@variables t
+@named rs = ReactionSystem(wiki_rxns, t)
 rs = complete(rs)
 rxns = wiki_rxns
 
