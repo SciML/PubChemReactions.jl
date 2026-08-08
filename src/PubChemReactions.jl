@@ -1,14 +1,17 @@
 module PubChemReactions
 
-using JSON3, HTTP, Symbolics, CSV, DataFrames
-import SymbolicUtils, SymbolicIndexingInterface
-using Catalyst, Graphs
-using StatsBase
-using ImageIO, FileIO, Plots
-using Downloads
-# using URIs maybe
-using PeriodicTable
-using Cascadia, Gumbo # grumble grumble
+import CSV, Cascadia, Catalyst, Downloads, Graphs, Gumbo, HTTP, ImageIO, JSON3,
+    PeriodicTable, Plots, SymbolicIndexingInterface, Symbolics, SymbolicUtils
+using Cascadia: Selector
+using Catalyst: Reaction, ReactionSystem, reactions
+using DataFrames: DataFrame
+using FileIO: load
+using Graphs: SimpleGraph, add_edge!
+using Gumbo: parsehtml
+using Plots: title!
+using StatsBase: countmap
+using Symbolics: Equation, Num, @variables
+using SymbolicUtils: getmetadata, hasmetadata, operation, setmetadata
 # using Groebner, DynamicPolynomials
 # using PolynomialRoots, PolynomialFactors
 
