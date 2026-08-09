@@ -32,10 +32,4 @@ run_qa(
             ),
         ),
     ),
-    # The module relies on many implicit imports from its heavy `using` deps (CSV,
-    # Cascadia, Catalyst, Symbolics, SymbolicUtils, DataFrames, Downloads, FileIO,
-    # Graphs, Gumbo, HTTP, ImageIO, JSON3, PeriodicTable, Plots, StatsBase). Making
-    # them explicit is a large, risky refactor; tracked rather than mass-rewritten.
-    # https://github.com/SciML/PubChemReactions.jl/issues/62
-    ei_broken = (:no_implicit_imports,),
 )
