@@ -3,7 +3,6 @@ using JET
 
 run_qa(
     PubChemReactions;
-    jet_kwargs = (; target_defined_modules = true),
     ei_kwargs = (;
         # `escapeuri` is owned by URIs but accessed via HTTP. `scalarize` and
         # `unwrap` are public Symbolics entry points whose methods are owned by

@@ -55,6 +55,16 @@ export pathway_reaction
     pc()
 
 Open the PubChem homepage in the system default browser.
+
+# Returns
+
+The `Bool` result from the platform browser launcher.
+
+# Examples
+
+```julia
+pc()
+```
 """
 pc() = open_in_default_browser(PC_ROOT)
 export pc
