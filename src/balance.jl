@@ -2,6 +2,42 @@ function atom_count_diff(rxn::Catalyst.Reaction)
     return replace_atom_counts_with_elements(mergewith(-, reverse(atom_counts(rxn))...))
 end
 
+"""
+    isbalanced(substrates, products; substoich = ones(length(substrates)),
+        prodstoich = ones(length(products)))
+
+Determine whether the substrate and product collections contain the same
+stoichiometric atom counts.
+
+# Arguments
+
+- `substrates`: Collection of PubChem species on the left-hand side. Every
+  species must have the atom-bond graph metadata used by `PubChemReactions`.
+- `products`: Collection of PubChem species on the right-hand side.
+
+# Keyword Arguments
+
+- `substoich`: Numeric coefficients for `substrates`. Its length must match
+  `substrates`.
+- `prodstoich`: Numeric coefficients for `products`. Its length must match
+  `products`.
+
+# Returns
+
+`true` when the weighted atom counts match exactly, and `false` otherwise.
+
+# Examples
+
+```julia
+using PubChemReactions
+
+h2 = PubChemReactions.search_compound("hydrogen")
+o2 = PubChemReactions.search_compound("oxygen")
+h2o = PubChemReactions.search_compound("water")
+
+isbalanced([h2, o2], [h2o]; substoich = [2, 1], prodstoich = [2])
+```
+"""
 function isbalanced(
         substrates, products; substoich = ones(length(substrates)),
         prodstoich = ones(length(products))
@@ -12,8 +48,21 @@ end
 """
     isbalanced(rxn)
 
-Return `true` when the substrates and products in reaction `rxn` have matching
-element counts.
+Determine whether the substrate and product species in Catalyst reaction `rxn`
+have matching stoichiometric atom counts.
+
+# Arguments
+
+- `rxn`: A Catalyst `Reaction` whose species have PubChem `Compound` and
+  atom-bond graph metadata.
+
+# Returns
+
+`true` when the reaction is element-balanced, and `false` otherwise. An error
+is thrown when a reaction species lacks the metadata required to count atoms.
+
+The reaction's `substoich` and `prodstoich` fields are passed to the collection
+method, so the check uses the reaction's current stoichiometric coefficients.
 """
 function isbalanced(rxn)
     all(hasmetadata.(reaction_species(rxn), Compound)) ||
@@ -26,8 +75,17 @@ end
 """
     isbalanced(rn::ReactionSystem)
 
-Return `true` when every reaction in the Catalyst reaction system `rn` is
+Determine whether every reaction in Catalyst reaction system `rn` is
 element-balanced.
+
+# Arguments
+
+- `rn`: A Catalyst `ReactionSystem` whose reactions contain PubChem species.
+
+# Returns
+
+`true` when `isbalanced` returns `true` for every reaction in `rn`, and `false`
+otherwise. Metadata errors from an individual reaction are propagated.
 """
 function isbalanced(rn::ReactionSystem)
     return all(isbalanced.(reactions(rn)))
@@ -44,6 +102,19 @@ end
     element_counts(x)
 
 Return atom counts for `x` keyed by `PeriodicTable.Element` values.
+
+For a species or species collection, the result is a dictionary keyed by
+periodic-table elements. For a `Reaction`, the result is a tuple containing
+the substrate and product dictionaries.
+
+# Arguments
+
+- `x`: PubChem species, a collection of species, or a Catalyst `Reaction`.
+
+# Returns
+
+A dictionary, or a substrate/product tuple of dictionaries, containing the
+weighted atom counts keyed by `PeriodicTable.Element`.
 """
 element_counts(x) = replace_atom_counts_with_elements(atom_counts(x))
 element_counts(x::Reaction) = replace_atom_counts_with_elements.(atom_counts(x))
@@ -51,8 +122,18 @@ element_counts(x::Reaction) = replace_atom_counts_with_elements.(atom_counts(x))
 """
     atom_counts(x)
 
-Return atom counts for a PubChem species, reaction, or stoichiometric species
-collection.
+Return atom counts for a PubChem species, reaction, or species collection.
+
+# Arguments
+
+- `x`: A PubChem species, a collection of species, or a Catalyst `Reaction`.
+
+# Returns
+
+For a species or collection, a dictionary keyed by the atomic numbers stored in
+the PubChem atom-bond graph. For a `Reaction`, a tuple containing separate
+substrate and product dictionaries is returned. Reaction dictionaries include
+the reaction's stoichiometric coefficients.
 """
 function atom_counts(s::Num)
     c = getmetadata(s, AtomBondGraph)
@@ -119,12 +200,6 @@ get_elements(s::Vector) = Set(reduce(vcat, get_elements.(s)))
 #     rxn
 # end
 
-"""
-    balance_eqs(substrates, products; add_constraint_eq = true)
-    balance_eqs(rxn::Reaction; add_constraint_eq = true)
-
-Construct symbolic element and charge balance equations for a reaction.
-"""
 function balance_eqs(
         x, occurring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq = false
     )
@@ -174,6 +249,41 @@ function balance_setup(substrates, products)
     return occurring_elements, atomcounts, chgs, n_specs, n_subs
 end
 
+"""
+    balance_eqs(substrates, products; add_constraint_eq = true)
+
+Construct symbolic element and charge balance equations for collections of
+PubChem substrate and product species.
+
+# Arguments
+
+- `substrates`: Collection of PubChem species on the left-hand side.
+- `products`: Collection of PubChem species on the right-hand side.
+
+# Keyword Arguments
+
+- `add_constraint_eq`: If `true`, append an equation fixing the coefficient of
+  the final species to `1`. This removes the scale ambiguity from the returned
+  homogeneous balance equations. The default is `true`.
+
+# Returns
+
+A `Vector{Symbolics.Equation}` containing one symbolic coefficient for each
+species in `vcat(substrates, products)`, with equations for every occurring
+element and, when needed, total charge. The substrate coefficients appear on
+the left-hand side and product coefficients on the right-hand side.
+
+# Examples
+
+```julia
+using PubChemReactions
+
+h2 = PubChemReactions.search_compound("hydrogen")
+o2 = PubChemReactions.search_compound("oxygen")
+h2o = PubChemReactions.search_compound("water")
+eqs = balance_eqs([h2, o2], [h2o])
+```
+"""
 function balance_eqs(substrates, products; add_constraint_eq = true)
     occurring_elements, atomcounts, chgs, n_specs,
         n_subs = balance_setup(substrates, products)
@@ -181,6 +291,28 @@ function balance_eqs(substrates, products; add_constraint_eq = true)
     return balance_eqs(x, occurring_elements, atomcounts, chgs, n_specs, n_subs; add_constraint_eq)
 end
 
+"""
+    balance_eqs(rxn::Reaction; add_constraint_eq = true)
+
+Construct symbolic element and charge balance equations for the substrate and
+product species in Catalyst reaction `rxn`.
+
+# Arguments
+
+- `rxn`: A Catalyst `Reaction` containing PubChem species. Its current
+  stoichiometric coefficients are not used; the returned equations introduce a
+  new coefficient for each species.
+
+# Keyword Arguments
+
+- `add_constraint_eq`: If `true`, append an equation fixing the coefficient of
+  the final species to `1`. The default is `true`.
+
+# Returns
+
+A `Vector{Symbolics.Equation}` equivalent to
+`balance_eqs(rxn.substrates, rxn.products; add_constraint_eq)`.
+"""
 function balance_eqs(rxn::Reaction; add_constraint_eq = true)
     return balance_eqs(rxn.substrates, rxn.products; add_constraint_eq)
 end
@@ -190,6 +322,17 @@ eq_to_term(eq) = eq.lhs - eq.rhs
     atom_matrix(rxn::Reaction)
 
 Return the linear coefficient matrix for the balance equations of `rxn`.
+
+# Arguments
+
+- `rxn`: A Catalyst `Reaction` containing PubChem species.
+
+# Returns
+
+A matrix whose columns correspond to the species in the reaction and whose
+rows contain the coefficients of the element and charge balance equations. The
+matrix is formed from `balance_eqs(rxn)` and therefore includes the
+normalization equation by default.
 """
 function atom_matrix(rxn::Reaction)
     eqs = balance_eqs(rxn)
