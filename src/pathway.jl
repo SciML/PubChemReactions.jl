@@ -43,6 +43,17 @@ end
     pathway_reaction(rxn_str)
 
 Parse a PubChem pathway reaction string into a Catalyst `Reaction` with unit rate.
+
+# Arguments
+
+- `rxn_str`: A PubChem pathway reaction string containing HTML links to the
+  reactant and product compounds.
+
+# Returns
+
+A Catalyst `Reaction` with rate `1`, with reactants and products represented as
+PubChem species. Compound records are retrieved while parsing the linked
+species.
 """
 pathway_reaction(rxn_str) = Reaction(1, parse_pathway_reaction(rxn_str)...)
 

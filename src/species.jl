@@ -50,6 +50,15 @@ end
     isspecies(s)
 
 Return `true` when `s` has PubChem atom-bond graph metadata.
+
+# Arguments
+
+- `s`: A symbolic expression or other value to inspect.
+
+# Returns
+
+`true` when `s` has `AtomBondGraph` metadata and `false` otherwise. This
+predicate does not perform a network request or validate any other metadata.
 """
 function isspecies(s)
     return hasmetadata(s, AtomBondGraph)

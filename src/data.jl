@@ -99,6 +99,18 @@ end
     get_graph(s)
 
 Return the atom-bond graph metadata attached to PubChem species `s`.
+
+# Arguments
+
+- `s`: A symbolic species with `AtomBondGraph` metadata.
+
+# Returns
+
+The `AtomBondGraph` metadata value associated with `s`.
+
+# Errors
+
+Throws an error when `s` is not recognized as a PubChem species.
 """
 get_graph(s) = isspecies(s) ? getmetadata(s, AtomBondGraph) : error("no graph for var $s")
 
@@ -106,6 +118,18 @@ get_graph(s) = isspecies(s) ? getmetadata(s, AtomBondGraph) : error("no graph fo
     get_charge(s)
 
 Return the formal charge stored in the PubChem species metadata for `s`.
+
+# Arguments
+
+- `s`: A symbolic PubChem species with compound-charge metadata.
+
+# Returns
+
+The integer formal charge associated with `s`.
+
+# Errors
+
+Throws an error when `s` is not recognized as a PubChem species.
 """
 function get_charge(s)
     return isspecies(s) ? getmetadata(s, CompoundCharge).charge : error("no charge for var $s")
@@ -121,6 +145,14 @@ end
     get_cid(s)
 
 Return the PubChem compound identifier attached to species `s`.
+
+# Arguments
+
+- `s`: A symbolic PubChem species with `Compound` metadata.
+
+# Returns
+
+The integer PubChem compound identifier stored in `s`.
 """
 function get_cid(s)
     return getmetadata(s, Compound).cid
@@ -138,6 +170,14 @@ end
     get_name(s)
 
 Return the PubChem compound name attached to species `s`.
+
+# Arguments
+
+- `s`: A symbolic PubChem species with `Compound` metadata.
+
+# Returns
+
+The compound name stored in the `Compound` metadata for `s`.
 """
 function get_name(s)
     return getmetadata(s, Compound).name
@@ -221,5 +261,15 @@ end
     pubchem_search(s)
 
 Open a PubChem search for query `s` in the system default browser.
+
+# Arguments
+
+- `s`: A string or other value that can be interpolated into a PubChem search
+  query.
+
+# Returns
+
+`true` when the platform-specific browser command is started successfully, and
+`false` when the platform is unsupported or the command fails.
 """
 pubchem_search(s) = open_in_default_browser(joinpath(PC_ROOT, "#query=$s"))

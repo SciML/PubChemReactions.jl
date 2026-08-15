@@ -2,6 +2,20 @@
     make_at_species(sps; current_name = true)
 
 Return a Catalyst `@species` expression string for PubChem species `sps`.
+
+# Arguments
+
+- `sps`: A PubChem symbolic species with compound name and CID metadata.
+
+# Keyword Arguments
+
+- `current_name`: If `true`, use the current symbolic operation name. If
+  `false`, use the PubChem compound name. The default is `true`.
+
+# Returns
+
+A string containing a Catalyst `@species` expression with the species CID and
+`save`/`load` options enabled.
 """
 function make_at_species(sps; current_name = true)
     name = current_name ? nameof(operation(Symbolics.value(sps))) :
@@ -19,6 +33,15 @@ end
     eqs_to_mathematica(eqs)
 
 Convert symbolic equations to a Wolfram Language list string.
+
+# Arguments
+
+- `eqs`: An iterable collection of symbolic equations.
+
+# Returns
+
+A string containing the equations in a Wolfram Language list, with Julia's
+`~`, `&`, and `|` operators converted to `==`, `&&`, and `||`.
 """
 function eqs_to_mathematica(eqs)
     es = string.(eqs)
