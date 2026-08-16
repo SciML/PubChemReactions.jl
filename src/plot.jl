@@ -11,6 +11,28 @@ end
 
 Download PubChem's 2D structure image for species `s` and display it with the
 compound identifier, molecular formula, and name in the plot title.
+
+# Arguments
+
+- `s`: symbolic PubChem species.
+
+# Keyword Arguments
+
+- `verbose`: if `true`, log the compound identifier, name, and formula.
+
+# Returns
+
+The result of displaying the generated plot.
+
+# Errors
+
+Propagates PubChem download, image decoding, and metadata lookup errors.
+
+# Examples
+
+```julia
+atomplot(species; verbose = true)
+```
 """
 function atomplot(s; verbose = false)
     cid, io = download_atomplot(s)
@@ -53,6 +75,24 @@ end
     atomplot3d(s)
 
 Open the PubChem 3D conformer viewer for species `s`.
+
+# Arguments
+
+- `s`: symbolic PubChem species.
+
+# Returns
+
+The `Bool` result from the platform browser launcher.
+
+# Errors
+
+Throws a metadata lookup error when `s` is not a PubChem species.
+
+# Examples
+
+```julia
+atomplot3d(species)
+```
 """
 function atomplot3d(s)
     cid = string(get_cid(s))
@@ -64,6 +104,24 @@ end
     atomplot2d(s)
 
 Open the PubChem 2D structure viewer for species `s`.
+
+# Arguments
+
+- `s`: symbolic PubChem species.
+
+# Returns
+
+The `Bool` result from the platform browser launcher.
+
+# Errors
+
+Throws a metadata lookup error when `s` is not a PubChem species.
+
+# Examples
+
+```julia
+atomplot2d(species)
+```
 """
 function atomplot2d(s)
     cid = string(get_cid(s))
