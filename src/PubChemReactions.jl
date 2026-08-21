@@ -9,6 +9,7 @@ using FileIO: load
 using Graphs: SimpleGraph, add_edge!
 using Gumbo: parsehtml
 using Plots: title!
+using PrecompileTools: @compile_workload, @setup_workload
 using StatsBase: countmap
 using Symbolics: Equation, Num, @variables
 using SymbolicUtils: getmetadata, hasmetadata, operation, setmetadata
@@ -68,5 +69,13 @@ pc()
 """
 pc() = open_in_default_browser(PC_ROOT)
 export pc
+
+@setup_workload begin
+    @compile_workload begin
+        reactants, products = rhea_to_reacts_prods("2 H2O + CO2 -> CH4 + 2 O2")
+        make_stoich_from_rhea.(reactants)
+        make_stoich_from_rhea.(products)
+    end
+end
 
 end # module
