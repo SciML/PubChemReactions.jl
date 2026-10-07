@@ -71,7 +71,7 @@ end
 
 function get_page(url)
     io = IOBuffer()
-    Downloads.download(url, io)
+    Downloads.download(url, io; timeout = 300)
     return String(take!(io))
 end
 
