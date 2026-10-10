@@ -1,10 +1,23 @@
 """
     pubchem_get(url; kwargs...)
 
-Perform a GET request with retries enabled for transient PubChem/Rhea network failures.
+Perform a GET request to PubChem/Rhea that survives transient failures.
+
+HTTP.jl's built-in retries back off for at most a few hundred milliseconds, which is
+far shorter than PubChem's throttling window (it answers `503` while overloaded), and
+by default a stalled connection is never timed out. Requests therefore carry
+connect/read-idle timeouts and are retried with a multi-second exponential backoff on
+any failure except a definitive (non-`408`/`429`) `4xx` response.
 """
 function pubchem_get(url; kwargs...)
-    return HTTP.get(url; retry = true, retries = 3, kwargs...)
+    get_once = () -> HTTP.get(url; connect_timeout = 30, read_idle_timeout = 120, kwargs...)
+    delays = ExponentialBackOff(; n = 6, first_delay = 2.0, max_delay = 60.0)
+    return retry(get_once; delays, check = (_, e) -> is_transient_http_failure(e))()
+end
+
+function is_transient_http_failure(e)
+    e isa HTTP.StatusError || return true
+    return e.status >= 500 || e.status in (408, 429)
 end
 
 pug_url_name(cname) = joinpath(PUG_URL, "compound/name/$(cname)/record/JSON")
