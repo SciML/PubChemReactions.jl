@@ -1,12 +1,27 @@
+sdq_url(query) = string(SDQ_URL, "?infmt=json&outfmt=json&query=", HTTP.escapeuri(JSON3.write(query)))
+
+"""
+    pathway_record(pwacc)
+
+Fetch the PubChem `pathway` collection record for accession `pwacc`
+(e.g. `"Reactome:R-HSA-70171"`). Throws `ArgumentError` if no such pathway exists.
+Internal, not exported.
+"""
+function pathway_record(pwacc)
+    query = (select = "*", collection = "pathway", where = (ands = [(pwacc = pwacc,)],), start = 1, limit = 1)
+    rows = only(JSON3.read(get_page(sdq_url(query))).SDQOutputSet).rows
+    isempty(rows) && throw(ArgumentError("PubChem has no pathway with accession $(repr(pwacc))"))
+    return only(rows)
+end
+
 function pathway_json(pid)
-    internal_pid = get_internal_pathwayid(pid)
-    url = join(
-        [
-            PubChemReactions.RXN_TABLE_BASE_URL,
-            "?infmt=json&outfmt=json&query={%22download%22:%22*%22,%22collection%22:%22pathwayreaction%22,%22where%22:{%22ands%22:[{%22pathwayid%22:%22$(internal_pid)%22}]},%22order%22:[%22relevancescore,desc%22],%22start%22:1,%22limit%22:10000000,%22downloadfilename%22:%22$(internal_pid)_pathwayreaction%22}",
-        ]
+    pw = pathway_record(pid)
+    query = (
+        download = "*", collection = "pathwayreaction",
+        where = (ands = [(source = pw.source,), (externalid = pw.externalid,)],),
+        order = ["relevancescore,desc"], start = 1, limit = 10_000_000,
     )
-    return JSON3.read(get_page(url))
+    return JSON3.read(get_page(sdq_url(query)))
 end
 
 """
@@ -75,27 +90,6 @@ function get_page(url)
     return String(take!(io))
 end
 
-function get_html(url)
-    p = get_page(url)
-    return parsehtml(p)
-end
-
-"""
-Until PubChem gets back to me about how to query the reactions for a pathway, this is the only way it seems.
-"""
-function get_internal_pathwayid(pid)
-    url = joinpath(PC_ROOT, "pathway/$(pid)")
-    h = get_html(url).root
-    ms = eachmatch(Selector("meta")::Cascadia.Selector, h)
-    m = only(
-        filter(
-            x -> haskey(x.attributes, "name") &&
-                (x.attributes["name"] == "pubchem_uid_value"), ms
-        )
-    )
-    return m.attributes["content"]
-end
-
 function pc_pathway_rxn_to_rp_cids(jr)
     rcids = get(jr, :cidsreactant, [])
     pcids = get(jr, :cidsproduct, [])
@@ -103,6 +97,7 @@ function pc_pathway_rxn_to_rp_cids(jr)
 end
 
 to_arr(xs) = isa(xs, AbstractArray) ? xs : [xs]
+to_arr(xs::AbstractString) = isempty(xs) ? String[] : [xs]
 
 """
 check that the reaction str `jr.reaction`, when parsed, has the same length as the rcids and pcids from the json
