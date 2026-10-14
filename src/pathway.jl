@@ -1,4 +1,4 @@
-sdq_url(query) = string(SDQ_URL, "?infmt=json&outfmt=json&query=", HTTP.escapeuri(JSON3.write(query)))
+sdq_url(query) = string(SDQ_URL, "?infmt=json&outfmt=json&query=", URIs.escapeuri(JSON3.write(query)))
 
 """
     pathway_record(pwacc)

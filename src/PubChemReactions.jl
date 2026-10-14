@@ -1,7 +1,7 @@
 module PubChemReactions
 
 import CSV, Cascadia, Catalyst, Downloads, Graphs, Gumbo, HTTP, ImageIO, JSON3,
-    PeriodicTable, Plots, SymbolicIndexingInterface, Symbolics, SymbolicUtils
+    PeriodicTable, Plots, SymbolicIndexingInterface, Symbolics, SymbolicUtils, URIs
 using Cascadia: Selector
 using Catalyst: Reaction, ReactionSystem, reactions
 using DataFrames: DataFrame
