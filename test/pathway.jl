@@ -21,6 +21,11 @@ rxns2 = PubChemReactions.get_pathway(pid)
 @test !isempty(rxns2)
 @test PubChemReactions.pathway_record("Reactome:R-HSA-70171").externalid == "R-HSA-70171"
 @test_throws ArgumentError PubChemReactions.pathway_record("NotASource:XYZ")
+for bad in ("", "Reactome", "R-HSA-70171", "reactome:r-hsa-70171", "Reactome:R-HSA-70171 ")
+    @test_throws ArgumentError PubChemReactions.pathway_record(bad)
+end
+@test_throws ArgumentError PubChemReactions.pathway_json("")
+@test_throws ArgumentError PubChemReactions.get_pathway("Reactome")
 @named rs2 = ReactionSystem(rxns2, Catalyst.DEFAULT_IV)
 rs2 = complete(rs2)
 sts = unknowns(rs2)

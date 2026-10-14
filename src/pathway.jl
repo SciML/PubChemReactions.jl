@@ -3,15 +3,20 @@ sdq_url(query) = string(SDQ_URL, "?infmt=json&outfmt=json&query=", HTTP.escapeur
 """
     pathway_record(pwacc)
 
-Fetch the PubChem `pathway` collection record for accession `pwacc`
-(e.g. `"Reactome:R-HSA-70171"`). Throws `ArgumentError` if no such pathway exists.
-Internal, not exported.
+Fetch the PubChem `pathway` collection record for accession `pwacc`, given exactly
+as PubChem lists it (`"<source>:<external id>"`, case-sensitive, e.g.
+`"Reactome:R-HSA-70171"`). Throws `ArgumentError` for malformed accessions or when
+PubChem has no pathway with exactly that accession. Internal, not exported.
 """
 function pathway_record(pwacc)
-    query = (select = "*", collection = "pathway", where = (ands = [(pwacc = pwacc,)],), start = 1, limit = 1)
+    pwacc isa AbstractString && occursin(r"^[^:\s]+:\S+$", pwacc) ||
+        throw(ArgumentError("invalid pathway accession $(repr(pwacc))"))
+    query = (select = "*", collection = "pathway", where = (ands = [(pwacc = pwacc,)],), start = 1, limit = 10)
     rows = only(JSON3.read(get_page(sdq_url(query))).SDQOutputSet).rows
-    isempty(rows) && throw(ArgumentError("PubChem has no pathway with accession $(repr(pwacc))"))
-    return only(rows)
+    matches = filter(r -> r.pwacc == pwacc, rows)
+    length(matches) == 1 ||
+        throw(ArgumentError("PubChem has no pathway with accession $(repr(pwacc))"))
+    return only(matches)
 end
 
 function pathway_json(pid)
