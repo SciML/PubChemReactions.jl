@@ -1,10 +1,11 @@
-using PubChemReactions, Catalyst, OrdinaryDiffEq
+using PubChemReactions, Catalyst, OrdinaryDiffEq, Test
 # sadly it seems only reactions that are balanced with all 1 stoich values are working with `get_pathway`
 
 @variables t
 # PathBank Citric Acid Cycle
 pid = "PathBank:SMP0000057"
 rxns = PubChemReactions.get_pathway(pid)
+@test !isempty(rxns)
 @named rs = ReactionSystem(rxns, Catalyst.DEFAULT_IV)
 # Catalyst v16: systems must be `complete`d before building a problem, and an
 # `ODEProblem` is constructed directly from the ReactionSystem (`convert(ODESystem, ...)`
@@ -17,6 +18,14 @@ sol = OrdinaryDiffEq.solve(prob, Tsit5())
 # # Reactome Glycolysis
 pid = "Reactome:R-HSA-70171"
 rxns2 = PubChemReactions.get_pathway(pid)
+@test !isempty(rxns2)
+@test PubChemReactions.pathway_record("Reactome:R-HSA-70171").externalid == "R-HSA-70171"
+@test_throws ArgumentError PubChemReactions.pathway_record("NotASource:XYZ")
+for bad in ("", "Reactome", "R-HSA-70171", "reactome:r-hsa-70171", "Reactome:R-HSA-70171 ")
+    @test_throws ArgumentError PubChemReactions.pathway_record(bad)
+end
+@test_throws ArgumentError PubChemReactions.pathway_json("")
+@test_throws ArgumentError PubChemReactions.get_pathway("Reactome")
 @named rs2 = ReactionSystem(rxns2, Catalyst.DEFAULT_IV)
 rs2 = complete(rs2)
 sts = unknowns(rs2)

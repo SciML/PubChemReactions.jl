@@ -1,4 +1,6 @@
 # "HSA" appears in Reactome stable identifiers (e.g. R-HSA-70171, HSA = Homo sapiens)
 # and must not be "corrected" to "HAS".
+# "ands" is a field name in PubChem's SDQ query JSON (`where = (ands = [...])`).
 [default.extend-words]
 HSA = "HSA"
+ands = "ands"

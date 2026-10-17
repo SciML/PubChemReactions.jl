@@ -1,7 +1,7 @@
 module PubChemReactions
 
 import CSV, Cascadia, Catalyst, Downloads, Graphs, Gumbo, HTTP, ImageIO, JSON3,
-    PeriodicTable, Plots, SymbolicIndexingInterface, Symbolics, SymbolicUtils
+    PeriodicTable, Plots, SymbolicIndexingInterface, Symbolics, SymbolicUtils, URIs
 using Cascadia: Selector
 using Catalyst: Reaction, ReactionSystem, reactions
 using DataFrames: DataFrame
@@ -19,7 +19,7 @@ using SymbolicUtils: getmetadata, hasmetadata, operation, setmetadata
 const PC_ROOT = "https://pubchem.ncbi.nlm.nih.gov"
 const PUG_URL = joinpath(PC_ROOT, "rest/pug")
 const PUG_VIEW_URL = joinpath(PC_ROOT, "rest/pug_view")
-const RXN_TABLE_BASE_URL = joinpath(PC_ROOT, "sdq/sdqagent.cgi")
+const SDQ_URL = joinpath(PC_ROOT, "sdq/sphinxql.cgi")
 
 const RHEA_URL = "https://www.rhea-db.org/rhea"
 
