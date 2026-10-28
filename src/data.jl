@@ -8,9 +8,17 @@ far shorter than PubChem's throttling window (it answers `503` while overloaded)
 by default a stalled connection is never timed out. Requests therefore carry
 connect/read-idle timeouts and are retried with a multi-second exponential backoff on
 any failure except a definitive (non-`408`/`429`) `4xx` response.
+
+`protocol = :h1` avoids HTTP.jl's HTTP/2 client, whose receive flow-control
+accounting is buggy at this package's compat floor: versions before 2.12 never
+return connection-level window credit for response bytes that arrive but are
+never read (abandoned bodies, resets, padding), so one throttle-induced
+mid-body failure permanently stalls every later request on the pooled
+connection (JuliaWeb/HTTP.jl#1371). These calls are sequential REST GETs,
+where HTTP/2 multiplexing gains nothing anyway.
 """
 function pubchem_get(url; kwargs...)
-    get_once = () -> HTTP.get(url; connect_timeout = 30, read_idle_timeout = 120, kwargs...)
+    get_once = () -> HTTP.get(url; connect_timeout = 30, read_idle_timeout = 120, protocol = :h1, kwargs...)
     delays = ExponentialBackOff(; n = 6, first_delay = 2.0, max_delay = 60.0)
     return retry(get_once; delays, check = (_, e) -> is_transient_http_failure(e))()
 end
