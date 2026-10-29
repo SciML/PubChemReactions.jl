@@ -10,12 +10,12 @@ connect/read-idle timeouts and are retried with a multi-second exponential backo
 any failure except a definitive (non-`408`/`429`) `4xx` response.
 
 `protocol = :h1` avoids HTTP.jl's HTTP/2 client, whose receive flow-control
-accounting is buggy at this package's compat floor: versions before 2.12 never
-return connection-level window credit for response bytes that arrive but are
-never read (abandoned bodies, resets, padding), so one throttle-induced
-mid-body failure permanently stalls every later request on the pooled
-connection (JuliaWeb/HTTP.jl#1371). These calls are sequential REST GETs,
-where HTTP/2 multiplexing gains nothing anyway.
+accounting is buggy at this package's compat floor: HTTP 2.3.1 (and through
+at least 2.6.7) never returns connection-level window credit for response
+bytes that arrive but are never read — the refund is present by 2.7.1 — so
+one throttle-induced mid-body failure permanently stalls every later request
+on the pooled connection (JuliaWeb/HTTP.jl#1371). These calls are sequential
+REST GETs, where HTTP/2 multiplexing gains nothing anyway.
 """
 function pubchem_get(url; kwargs...)
     get_once = () -> HTTP.get(url; connect_timeout = 30, read_idle_timeout = 120, protocol = :h1, kwargs...)
