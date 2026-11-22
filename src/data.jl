@@ -18,7 +18,7 @@ on the pooled connection (JuliaWeb/HTTP.jl#1371). These calls are sequential
 REST GETs, where HTTP/2 multiplexing gains nothing anyway.
 """
 function pubchem_get(url; kwargs...)
-    get_once = () -> HTTP.get(url; connect_timeout = 30, read_idle_timeout = 120, protocol = :h1, kwargs...)
+    get_once = () -> HTTP.request("GET", url; connect_timeout = 30, read_idle_timeout = 120, protocol = :h1, kwargs...)
     delays = ExponentialBackOff(; n = 6, first_delay = 2.0, max_delay = 60.0)
     return retry(get_once; delays, check = (_, e) -> is_transient_http_failure(e))()
 end
