@@ -1,5 +1,18 @@
 using PubChemReactions, HTTP, Test
 
+struct ProtocolProbe <: AbstractString end
+
+function HTTP.request(
+        method::AbstractString, ::ProtocolProbe, ::Union{Nothing, AbstractVector} = nothing, ::Nothing = nothing;
+        protocol = :auto, kwargs...
+    )
+    return (method, protocol)
+end
+
+@testset "pubchem_get defaults to HTTP/1.1" begin
+    @test PubChemReactions.pubchem_get(ProtocolProbe()) == ("GET", :h1)
+end
+
 # Local stand-in for PubChem: answers 503 while "throttled", like PubChem does under load.
 function with_server(f, handler)
     server = HTTP.serve!(handler, "127.0.0.1", 0)

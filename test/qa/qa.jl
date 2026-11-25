@@ -25,7 +25,6 @@ run_qa(
                 :Object,           # JSON3
                 :VariableSpecies,  # Catalyst
                 :escapeuri,        # HTTP
-                :get,              # HTTP
                 :read,             # JSON3 and CSV
                 :write,            # JSON3
             ),
